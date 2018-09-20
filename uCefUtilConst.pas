@@ -1,4 +1,4 @@
-unit uCefUtilsConst;
+unit uCefUtilConst;
 
 interface
 
@@ -39,6 +39,14 @@ const
   VAL_SET_ELEMENT_VALUE   = 10;
   VAL_SET_SELECT_VALUE    = 11;
   VAL_GET_ELEMENTS_ATTR   = 12;
+
+
+  SPEED_DEF = 1000;
+  SCROLL_WAIT = 3333;
+  CEF_EVENT_WAIT_TIMEOUT = 100000;
+  TIMEOUT_DEF = 60 * 1000;
+  NAV_WAIT_TIMEOUT = 5 * 1000;
+  SCREEN_WAIT_TIMEOUT = 10 * 1000;
 
 implementation
 

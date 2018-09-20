@@ -1,4 +1,4 @@
-unit uCefUtilsFunc;
+unit uCefUtilFunc;
 
 interface
 
@@ -54,15 +54,23 @@ function CefStringMapToDictValue(const A: ICefStringMap): ICefDictionaryValue;
 function CefListValueToJson(const A: ICefListValue; const APad: string): string;
 function CefListValueToJsonStr(const A: ICefListValue): string;
 
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
+  const AName: string; const AValue: ICefValue); overload;
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
+  const AName, AValue: string); overload;
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
+  const AName: string; const AValue: Boolean); overload;
+procedure ContextWebRtcDisable(const AContext: ICefRequestContext);
+
 implementation
 
 uses
   //
-  uCEFStringMap, uCEFDictionaryValue, uCEFTypes,
+  uCEFStringMap, uCEFDictionaryValue, uCEFTypes, uCefTask, uCEFValue,
   //
   uGlobalFunctions,
   //
-  uCEFProcessMessage, uCefUtilsConst;
+  uCEFProcessMessage, uCefUtilConst;
 
 function CefAppMessageNew: ICefProcessMessage;
 begin
@@ -313,6 +321,59 @@ end;
 function ElemByCefList(const A: ICefListValue): TElementParams;
 begin
   Result := TElementParams.CreateCefListValue(A)
+end;
+
+
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
+  const AName: string; const AValue: ICefValue);
+begin
+  TCefFastTask.New(TID_UI,
+    procedure
+    var
+      //res: Boolean;
+      err: ustring;
+    begin
+      {res := }AContext.SetPreference(AName, AValue, err);
+     // if not res then
+      //  gApp.Log.Error('fail context.SetPreference %s "%s"', [AName, err]);
+    end);
+end;
+
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
+  const AName, AValue: string);
+var cefval: ICefValue;
+begin
+  cefval := TCefValueRef.New;
+  cefval.SetString(AValue);
+  ContextSetPreferenceIfCan(AContext, AName, cefval)
+end;
+
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
+  const AName: string; const AValue: Boolean);
+var cefval: ICefValue;
+begin
+  cefval := TCefValueRef.New;
+  cefval.SetBool(Ord(AValue));
+  ContextSetPreferenceIfCan(AContext, AName, cefval)
+end;
+
+procedure ContextWebRtcDisable(const AContext: ICefRequestContext);
+begin
+  //ContextSetPreferenceIfCan(AContext, 'disable-webrtc', True);
+  //ContextSetPreferenceIfCan(AContext, 'enable-webrtc', False);
+
+  // Disables leaking of IPs via WebRTC on standard CEF builds.
+  // This options obsoleted from Chromium M50, but still exists in source. (Actually they are no more exist on fresh builds (55+?.)
+  ContextSetPreferenceIfCan(AContext, 'webrtc.multiple_routes_enabled', false);
+  ContextSetPreferenceIfCan(AContext, 'webrtc.nonproxied_udp_enabled', false);
+  // Values:
+  // See webrtc_ip_handling_policy.h for description.
+  // default
+  // default_public_and_private_interfaces
+  // default_public_interface_only
+  // disable_non_proxied_udp
+  ContextSetPreferenceIfCan(AContext, 'webrtc.ip_handling_policy', 'disable_non_proxied_udp');
+  // media.device_id_salt is chrome-only preference, so there is no way to randomize device ids.
 end;
 
 end.

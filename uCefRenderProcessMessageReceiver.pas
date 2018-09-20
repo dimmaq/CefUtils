@@ -21,6 +21,7 @@ type
   end;
 
 procedure InitCefAppRenderProcessMessage;
+procedure AddCefAppRenderProcessMessageReceiver(const A: TCefRenderProcessMessageReceiver);
 
 implementation
 

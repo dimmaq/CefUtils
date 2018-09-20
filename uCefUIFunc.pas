@@ -7,7 +7,7 @@ uses
   //
   uCEFInterfaces, uCEFTypes, uCEFMiscFunctions, uCEFConstants, uCEFChromium,
   //
-  uBaseAmazonScript, uBaseWebActionCef, uCefFunc;
+  uCefScriptBase, uCefWebActionBase, uCefUtilFunc;
 
 const
   DIR_UP = 1;
@@ -21,33 +21,33 @@ function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: 
 
 function CefUIElementIdExists(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
     const AId: string): Boolean; overload;
-function CefUIElementIdExists(const AAction: TBaseAmazonScript;
+function CefUIElementIdExists(const AAction: TCefScriptBase;
     const AId: string): Boolean; overload;
 function CefUIElementExists(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): ICefListValue; overload;
-function CefUIElementExists(const AAction: TBaseAmazonScript;
+function CefUIElementExists(const AAction: TCefScriptBase;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): ICefListValue; overload;
-function CefUIElementExists(const AAction: TBaseAmazonScript;
+function CefUIElementExists(const AAction: TCefScriptBase;
   const AElement: TElementParams): ICefListValue; overload;
-function CefUIGetElementsAttr(const AAction: TBaseAmazonScript;
+function CefUIGetElementsAttr(const AAction: TCefScriptBase;
   const AElement: TElementParams): ICefListValue;
 function CefUIElementSetValuaById(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
     const AId, AValue: string): Boolean; overload;
-function CefUIElementSetValuaById(const AAction: TBaseAmazonScript;
+function CefUIElementSetValuaById(const AAction: TCefScriptBase;
     const AId, AValue: string): Boolean; overload;
 function CefUIElementSetValuaByName(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
     const AName, AValue: string): Boolean;
 function CefUIElementSetAttrByName(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
     const AName, AAttr, AValue: string): Boolean;
 function CefUIGetWindowRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent): TRect; overload;
-function CefUIGetWindowRect(const AAction: TBaseAmazonScript): TRect; overload;
+function CefUIGetWindowRect(const AAction: TCefScriptBase): TRect; overload;
 function CefUIGetBodyRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent): TRect;
 
 function CefUIGetElementRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const AElem: TElementParams): TRect; overload;
 function CefUIGetElementRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): TRect; overload;
-function CefUIGetElementRect(const AAction: TBaseAmazonScript;
+function CefUIGetElementRect(const AAction: TCefScriptBase;
   const AElem: TElementParams): TRect; overload;
 
 function CefUIScrollToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -57,18 +57,18 @@ function CefUIScrollToElement(const ABrowser: ICefBrowser; const AAbortEvent: TE
 function CefUIScrollToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ASpeed: Integer;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): Boolean; overload;
-function CefUIScrollToElement(const AAction: TBaseAmazonScript;
+function CefUIScrollToElement(const AAction: TCefScriptBase;
   const ASpeed: Integer;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): Boolean; overload;
-function CefUIScrollToElement(const AAction: TBaseAmazonScript;
+function CefUIScrollToElement(const AAction: TCefScriptBase;
   const ASpeed: Integer; const AElement: TElementParams): Boolean; overload;
-function CefUIScrollToElement(const AAction: TBaseAmazonScript;
+function CefUIScrollToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean; overload;
 
 
 function CefUIMouseSetToPoint(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const AMousePos: PPoint; const AToPoint: TPoint; const ATimeout: Integer): Boolean; overload;
-function CefUIMouseSetToPoint(const AAction: TBaseAmazonScript;
+function CefUIMouseSetToPoint(const AAction: TCefScriptBase;
   const AToPoint: TPoint; const ATimeout: Integer): Boolean; overload;
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   var APoint: TPoint; const ATimeout, AStep: Integer;
@@ -76,38 +76,38 @@ function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent:
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   var APoint: TPoint; const ASpeed: Integer;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): Boolean; overload;
-function CefUIMouseMoveToElement(const AAction: TBaseAmazonScript; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): Boolean; overload;
-function CefUIMouseMoveToElement(const AAction: TBaseAmazonScript; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
   const AElement: TElementParams): Boolean; overload;
-function CefUIMouseMoveToElement(const AAction: TBaseAmazonScript;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean; overload;
 procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint); overload;
-procedure CefUIMouseClick(const AAction: TBaseAmazonScript); overload;
+procedure CefUIMouseClick(const AAction: TCefScriptBase); overload;
 function CefUIDoScroll(const ACursor: TPoint; const AStep, ACount: Integer;
   const ABrowser: ICefBrowser; const AAbortEvent: TEvent; const ATimeout: Integer): Boolean;
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ACursor: TPoint; const ATimeout, AStep, ADir, ATry: Integer): Boolean; overload;
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ACursor: TPoint; const ASpeed, ADir: Integer): Boolean; overload;
-function CefUIScroll(const AAction: TBaseAmazonScript; const ASpeed, ADir: Integer): Boolean; overload;
+function CefUIScroll(const AAction: TCefScriptBase; const ASpeed, ADir: Integer): Boolean; overload;
 function CefUIGetElementText(const ABrowser: ICefBrowser;
   const AAbortEvent: TEvent; const AElement: TElementParams): string; overload;
-function CefUIGetElementText(const AAction: TBaseAmazonScript;
+function CefUIGetElementText(const AAction: TCefScriptBase;
   const AElement: TElementParams): string; overload;
 function CefUISetElementValue(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const AElement: TElementParams; const AValue: string): Boolean; overload;
-function CefUISetElementValue(const AAction: TBaseAmazonScript;
+function CefUISetElementValue(const AAction: TCefScriptBase;
   const AElement: TElementParams; const AValue: string): Boolean; overload;
 function CefUISetSelectValue(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const AElement: TElementParams; const AValue: string): Boolean; overload;
-function CefUISetSelectValue(const AAction: TBaseAmazonScript;
+function CefUISetSelectValue(const AAction: TCefScriptBase;
   const AElement: TElementParams; const AValue: string): Boolean; overload;
 
-function CefUITypeText(const AAction: TBaseAmazonScript; const AText: string;
+function CefUITypeText(const AAction: TCefScriptBase; const AText: string;
   const AElement: TElementParams): Boolean;
 
-function CefUIGetElementAttrValue(const AAction: TBaseAmazonScript;
+function CefUIGetElementAttrValue(const AAction: TCefScriptBase;
   const AElement: TElementParams; const AAttrName: string): string;
 
 implementation
@@ -117,19 +117,19 @@ uses
   //
   uGlobalFunctions,
   //
-  uApp, uAppConst, uWaitEventList;
+  uCefUtilConst, uCefWaitEventList;
 
 
 function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const A: ICefProcessMessage): ICefListValue;
 var
-  event: TWaitEventItem;
+  event: TCefWaitEventItem;
   args: ICefListValue;
   res: TWaitResult;
   fired: THandleObject;
   firedS: string;
 begin
-  event := gWaitEventList.Add();
+  event := CefWaitEventAdd();
   try
     args := A.ArgumentList;
     args.SetInt(IDX_EVENT, event.ID);
@@ -165,7 +165,7 @@ begin
       raise ECefRenderError.CreateFmt('render wait error %s %s time:%d', [WaitResultStr[res], firedS, event.TickDif])
     end;
   finally
-    gWaitEventList.Delete(event)
+    CefWaitEventDelete(event)
   end;
 end;
 
@@ -187,9 +187,9 @@ begin
     Result := False
 end;
 
-function CefUIElementIdExists(const AAction: TBaseAmazonScript; const AId: string): Boolean;
+function CefUIElementIdExists(const AAction: TCefScriptBase; const AId: string): Boolean;
 begin
-  Result := CefUIElementIdExists(AAction.Browser.Browser, AAction.AbortEvent, AId)
+  Result := CefUIElementIdExists(AAction.Chromium.Browser, AAction.AbortEvent, AId)
 end;
 
 function CefUIElementExists(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -215,14 +215,14 @@ begin
   Result := nil
 end;
 
-function CefUIElementExists(const AAction: TBaseAmazonScript;
+function CefUIElementExists(const AAction: TCefScriptBase;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): ICefListValue;
 begin
-  Result := CefUIElementExists(AAction.Browser.Browser, AAction.AbortEvent,
+  Result := CefUIElementExists(AAction.Chromium.Browser, AAction.AbortEvent,
     ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr)
 end;
 
-function CefUIElementExists(const AAction: TBaseAmazonScript;
+function CefUIElementExists(const AAction: TCefScriptBase;
   const AElement: TElementParams): ICefListValue;
 begin
   Result := CefUIElementExists(AAction, AElement.Tag, AElement.Id,
@@ -246,10 +246,10 @@ begin
     Result := False
 end;
 
-function CefUIElementSetValuaById(const AAction: TBaseAmazonScript;
+function CefUIElementSetValuaById(const AAction: TCefScriptBase;
     const AId, AValue: string): Boolean;
 begin
-  Result := CefUIElementSetValuaById(AAction.Browser.Browser, AAction.AbortEvent, AId, AValue)
+  Result := CefUIElementSetValuaById(AAction.Chromium.Browser, AAction.AbortEvent, AId, AValue)
 end;
 
 function CefUIElementSetValuaByName(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -304,10 +304,10 @@ begin
     Result := False
 end;
 
-function CefUISetElementValue(const AAction: TBaseAmazonScript;
+function CefUISetElementValue(const AAction: TCefScriptBase;
   const AElement: TElementParams; const AValue: string): Boolean;
 begin
-  Result := CefUISetElementValue(AAction.Browser.Browser, AAction.AbortEvent,
+  Result := CefUISetElementValue(AAction.Chromium.Browser, AAction.AbortEvent,
     AElement, AValue)
 end;
 
@@ -335,9 +335,9 @@ begin
     Result := TRect.Empty
 end;
 
-function CefUIGetWindowRect(const AAction: TBaseAmazonScript): TRect;
+function CefUIGetWindowRect(const AAction: TCefScriptBase): TRect;
 begin
-  Result := CefUIGetWindowRect(AAction.Browser.Browser, AAction.AbortEvent)
+  Result := CefUIGetWindowRect(AAction.Chromium.Browser, AAction.AbortEvent)
 end;
 
 function CefUIGetBodyRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent): TRect;
@@ -373,10 +373,10 @@ begin
     Result := TRect.Empty
 end;
 
-function CefUIGetElementRect(const AAction: TBaseAmazonScript;
+function CefUIGetElementRect(const AAction: TCefScriptBase;
   const AElem: TElementParams): TRect;
 begin
-  Result := CefUIGetElementRect(AAction.Browser.Browser, AAction.AbortEvent, AElem)
+  Result := CefUIGetElementRect(AAction.Chromium.Browser, AAction.AbortEvent, AElem)
 end;
 
 function CefUIGetElementRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -473,22 +473,22 @@ begin
       ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, 0)
 end;
 
-function CefUIScrollToElement(const AAction: TBaseAmazonScript;
+function CefUIScrollToElement(const AAction: TCefScriptBase;
   const ASpeed: Integer;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): Boolean;
 begin
-  Result := CefUIScrollToElement(AAction.Browser.Browser, AAction.AbortEvent,
+  Result := CefUIScrollToElement(AAction.Chromium.Browser, AAction.AbortEvent,
       ASpeed, ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr)
 end;
 
-function CefUIScrollToElement(const AAction: TBaseAmazonScript;
+function CefUIScrollToElement(const AAction: TCefScriptBase;
   const ASpeed: Integer; const AElement: TElementParams): Boolean;
 begin
   Result := (not AElement.IsEmpty) and CefUIScrollToElement(AAction, ASpeed, AElement.Tag, AElement.Id,
       AElement.Name, AElement.Class_, AElement.AttrName, AElement.AttrValue)
 end;
 
-function CefUIScrollToElement(const AAction: TBaseAmazonScript;
+function CefUIScrollToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean;
 begin
   Result := CefUIScrollToElement(AAction, AAction.Controller.Speed, AElement.Tag, AElement.Id,
@@ -527,10 +527,10 @@ begin
   Exit(True)
 end;
 
-function CefUIMouseSetToPoint(const AAction: TBaseAmazonScript;
+function CefUIMouseSetToPoint(const AAction: TCefScriptBase;
   const AToPoint: TPoint; const ATimeout: Integer): Boolean;
 begin
-  Result := CefUIMouseSetToPoint(AAction.Browser.Browser, AAction.AbortEvent,
+  Result := CefUIMouseSetToPoint(AAction.Chromium.Browser, AAction.AbortEvent,
     @AAction.Controller.Cursor, AToPoint, ATimeout)
 end;
 
@@ -631,21 +631,21 @@ begin
     ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr)
 end;
 
-function CefUIMouseMoveToElement(const AAction: TBaseAmazonScript; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): Boolean;
 begin
-  Result := CefUIMouseMoveToElement(AAction.Browser.Browser, AAction.AbortEvent,
+  Result := CefUIMouseMoveToElement(AAction.Chromium.Browser, AAction.AbortEvent,
     AAction.Controller.Cursor, ASpeed, ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr)
 end;
 
-function CefUIMouseMoveToElement(const AAction: TBaseAmazonScript; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
   const AElement: TElementParams): Boolean;
 begin
   Result := CefUIMouseMoveToElement(AAction, ASpeed, AElement.Tag, AElement.Id,
       AElement.Name, AElement.Class_, AElement.AttrName, AElement.AttrValue)
 end;
 
-function CefUIMouseMoveToElement(const AAction: TBaseAmazonScript;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean;
 begin
   Result := CefUIMouseMoveToElement(AAction, AAction.Controller.Speed, AElement.Tag, AElement.Id,
@@ -665,9 +665,9 @@ begin
   Sleep(100);
 end;
 
-procedure CefUIMouseClick(const AAction: TBaseAmazonScript);
+procedure CefUIMouseClick(const AAction: TCefScriptBase);
 begin
-  CefUIMouseClick(AAction.Browser.Browser, AAction.Controller.Cursor)
+  CefUIMouseClick(AAction.Chromium.Browser, AAction.Controller.Cursor)
 end;
 
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -716,9 +716,9 @@ begin
     Round(Power(ASpeed / 50000, -1)), SCROLL_STEP_DEF, ADir, 0)
 end;
 
-function CefUIScroll(const AAction: TBaseAmazonScript; const ASpeed, ADir: Integer): Boolean;
+function CefUIScroll(const AAction: TCefScriptBase; const ASpeed, ADir: Integer): Boolean;
 begin
-  Result := CefUIScroll(AAction.Browser.Browser, AAction.AbortEvent,
+  Result := CefUIScroll(AAction.Chromium.Browser, AAction.AbortEvent,
     AAction.Controller.Cursor, ASpeed, ADir)
 end;
 
@@ -739,10 +739,10 @@ begin
   Result := ''
 end;
 
-function CefUIGetElementText(const AAction: TBaseAmazonScript;
+function CefUIGetElementText(const AAction: TCefScriptBase;
   const AElement: TElementParams): string;
 begin
-  Result := CefUIGetElementText(AAction.Browser.Browser, AAction.AbortEvent, AElement)
+  Result := CefUIGetElementText(AAction.Chromium.Browser, AAction.AbortEvent, AElement)
 end;
 
 
@@ -761,20 +761,20 @@ begin
     Result := False
 end;
 
-function CefUISetSelectValue(const AAction: TBaseAmazonScript;
+function CefUISetSelectValue(const AAction: TCefScriptBase;
   const AElement: TElementParams; const AValue: string): Boolean;
 begin
-  Result := CefUISetSelectValue(AAction.Browser.Browser, AAction.AbortEvent, AElement, AValue)
+  Result := CefUISetSelectValue(AAction.Chromium.Browser, AAction.AbortEvent, AElement, AValue)
 end;
 
-function CefUIGetElementsAttr(const AAction: TBaseAmazonScript;
+function CefUIGetElementsAttr(const AAction: TCefScriptBase;
   const AElement: TElementParams): ICefListValue;
 var
   msg: ICefProcessMessage;
   res: ICefListValue;
 begin
   msg := CefAppMessageTypeElem(VAL_GET_ELEMENTS_ATTR, AElement);
-  res := CefUISendRenderMessage(AAction.Browser.Browser, AAction.AbortEvent, msg);
+  res := CefUISendRenderMessage(AAction.Chromium.Browser, AAction.AbortEvent, msg);
   if Assigned(res) then
     if res.GetType(IDX_RESULT) = VTYPE_LIST then
       Exit(res.GetList(IDX_RESULT).Copy());
@@ -813,13 +813,13 @@ begin
   ABrowser.SendKeyEvent(@event);
 end;
 
-function CefUITypeText(const AAction: TBaseAmazonScript; const AText: string;
+function CefUITypeText(const AAction: TCefScriptBase; const AText: string;
   const AElement: TElementParams): Boolean;
 var
   br: TChromium;
   ch: Char;
 begin
-  br := AAction.Browser;
+  br := AAction.Chromium;
   br.SendFocusEvent(True);
   if CefUIScrollToElement(AAction, AElement) then
   begin
@@ -839,7 +839,7 @@ begin
 end;
 
 
-function CefUIGetElementAttrValue(const AAction: TBaseAmazonScript;
+function CefUIGetElementAttrValue(const AAction: TCefScriptBase;
   const AElement: TElementParams; const AAttrName: string): string;
 var
   res: ICefListValue;

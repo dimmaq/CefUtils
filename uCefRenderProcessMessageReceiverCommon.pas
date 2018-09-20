@@ -28,7 +28,7 @@ uses
   //
   uCEFProcessMessage, uCEFMiscFunctions,
   //
-  uCefUtilsConst, uCefRenderFunc, uCefUtilsFunc;
+  uCefUtilConst, uCefRenderFunc, uCefUtilFunc;
 
 function TestIdExists(const ABrowser: ICefBrowser; const AId: string): ICefProcessMessage;
 var el: ICefDomNode;
@@ -205,5 +205,8 @@ begin
     ABrowser.SendProcessMessage(ASourceProcess, msg);
   end;
 end;
+
+initialization
+  AddCefAppRenderProcessMessageReceiver(TCefRenderProcessMessageReceiverCommon.Create())
 
 end.

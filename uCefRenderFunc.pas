@@ -7,7 +7,7 @@ uses
   //
   uCEFInterfaces, uCEFTypes, uCEFStringMap, uCEFListValue, uCEFDictionaryValue,
   //
-  uCefUtilsFunc;
+  uCefUtilFunc;
 
 function CefRenderElementExist(const browser: ICefBrowser;
   const AElement: TElementParams): ICefListValue;
@@ -35,7 +35,7 @@ implementation
 
 uses
   //
-  uCefDomVisitFunc, uCefUtilsConst;
+  uCefDomVisitFunc, uCefUtilConst;
 
 function CefRenderGetElementById(const browser: ICefBrowser; const AId: string): ICefDomNode;
 var res: ICefDomNode;
