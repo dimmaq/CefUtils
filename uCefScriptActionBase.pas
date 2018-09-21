@@ -294,7 +294,7 @@ end;
 function TCefScriptActionBase.RunScriptNav(const AUrl: string;
   const ASetFail, AIsNavigation: Boolean): Boolean;
 begin
-  Result := RunScriptNav(AUrl, ASetFail, AIsNavigation)
+  Result := RunScriptNav(AUrl, nil, nil, ASetFail, AIsNavigation)
 end;
 
 function TCefScriptActionBase.RunScriptNav(const ANavFunc: TCefScriptNavFunc;
