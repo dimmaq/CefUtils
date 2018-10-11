@@ -207,6 +207,6 @@ begin
 end;
 
 initialization
-  AddCefAppRenderProcessMessageReceiver(TCefRenderProcessMessageReceiverCommon.Create())
+  CefAppRenderProcessMessageReceiverAdd(TCefRenderProcessMessageReceiverCommon.Create())
 
 end.

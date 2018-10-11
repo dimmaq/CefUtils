@@ -23,7 +23,7 @@ type
     function DoStartEvent: Boolean; override;
     function DoNavEvent(const AWebAction: TCefWebAction): Boolean; virtual; abstract;
   public
-    constructor Create(const ASetIsNav: Boolean;
+    constructor Create(const ASetAsNav: Boolean;
       const AParent: TCefScriptBase);
     destructor Destroy; override;
     procedure AfterConstruction; override;
@@ -41,11 +41,11 @@ uses
 
 { TCefScriptNavBase }
 
-constructor TCefScriptNavBase.Create(const ASetIsNav: Boolean;
+constructor TCefScriptNavBase.Create(const ASetAsNav: Boolean;
   const AParent: TCefScriptBase);
 begin
   inherited Create(AParent);
-  FSetIsNav := ASetIsNav
+  FSetIsNav := ASetAsNav
 end;
 
 destructor TCefScriptNavBase.Destroy;

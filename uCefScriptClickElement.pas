@@ -22,10 +22,12 @@ type
   public
     constructor Create(const ASpeed: Integer; const ATag, AId, AName,
         AClass, AAttrName, AAttrValueRegExpr: string;
-        const ASetIsNav: Boolean;
+        const ASetAsNav: Boolean;
         const AParent: TCefScriptBase); overload;
     constructor Create(const ASpeed: Integer; const AId: string;
-        const ASetIsNav: Boolean;
+        const ASetAsNav: Boolean;
+        const AParent: TCefScriptBase); overload;
+    constructor Create(const AId: string; const ASetAsNav: Boolean;
         const AParent: TCefScriptBase); overload;
     class function GetName: string; override;
   end;
@@ -35,15 +37,15 @@ implementation
 
 uses
   //
-  uCefUIFunc;
+  uCefUIFunc, uCefUtilConst;
 
 { TScriptClickElement }
 
 constructor TScriptClickElement.Create(const ASpeed: Integer; const ATag, AId, AName,
-    AClass, AAttrName, AAttrValueRegExpr: string; const ASetIsNav: Boolean;
+    AClass, AAttrName, AAttrValueRegExpr: string; const ASetAsNav: Boolean;
     const AParent: TCefScriptBase);
 begin
-  inherited Create(ASetIsNav, AParent);
+  inherited Create(ASetAsNav, AParent);
   FSpeed := ASpeed;
   FTag := ATag;
   FId := AId;
@@ -51,12 +53,21 @@ begin
   FClass := AClass;
   FAttrName := AAttrName;
   FValueRegExpr := AAttrValueRegExpr;
+  //
+  if FSpeed = 0 then
+    FSpeed := SPEED_DEF
 end;
 
 constructor TScriptClickElement.Create(const ASpeed: Integer; const AId: string;
-  const ASetIsNav: Boolean; const AParent: TCefScriptBase);
+  const ASetAsNav: Boolean; const AParent: TCefScriptBase);
 begin
-  Create(ASpeed, '', AId, '', '', '', '', ASetIsNav, AParent)
+  Create(ASpeed, '', AId, '', '', '', '', ASetAsNav, AParent)
+end;
+
+constructor TScriptClickElement.Create(const AId: string;
+  const ASetAsNav: Boolean; const AParent: TCefScriptBase);
+begin
+  Create(AParent.Controller.Speed, AId, ASetAsNav, AParent)
 end;
 
 function TScriptClickElement.DoNavEvent(const AWebAction: TCefWebAction): Boolean;

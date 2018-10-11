@@ -5,9 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types,
   //
-  uCEFInterfaces,
-  //
-  uAppConst;
+  uCEFInterfaces;
 
 type
   ECefError = class(Exception);

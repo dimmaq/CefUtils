@@ -658,11 +658,11 @@ begin
   mouseEvent.x := APoint.X;
   mouseEvent.y := APoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
-  Sleep(100);
+  Sleep(50);
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, False, 1);
-  Sleep(200);
-  ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, True, 1);
   Sleep(100);
+  ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, True, 1);
+  Sleep(50);
 end;
 
 procedure CefUIMouseClick(const AAction: TCefScriptBase);

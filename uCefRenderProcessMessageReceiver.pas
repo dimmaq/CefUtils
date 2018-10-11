@@ -20,8 +20,8 @@ type
     destructor Destroy; override;
   end;
 
-procedure InitCefAppRenderProcessMessage;
-procedure AddCefAppRenderProcessMessageReceiver(const A: TCefRenderProcessMessageReceiver);
+procedure CefAppRenderProcessMessageInit;
+procedure CefAppRenderProcessMessageReceiverAdd(const A: TCefRenderProcessMessageReceiver);
 
 implementation
 
@@ -43,12 +43,12 @@ type
 var
   gReceiver: TCefRenderProcessMessageReceiverOwner;
 
-procedure InitCefAppRenderProcessMessage;
+procedure CefAppRenderProcessMessageInit;
 begin
   gReceiver.InitCefGlobalApp()
 end;
 
-procedure AddCefAppRenderProcessMessageReceiver(const A: TCefRenderProcessMessageReceiver);
+procedure CefAppRenderProcessMessageReceiverAdd(const A: TCefRenderProcessMessageReceiver);
 begin
   gReceiver.AddRceiver(A)
 end;
