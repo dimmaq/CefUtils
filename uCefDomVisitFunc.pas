@@ -3,7 +3,8 @@ unit uCefDomVisitFunc;
 interface
 
 uses
-  System.SysUtils, System.Types, System.Generics.Collections,
+  Classes, System.SysUtils, System.Types, System.IoUtils,
+  System.Generics.Collections,
   //
   uCEFInterfaces, uCEFTypes,
   //
@@ -12,9 +13,15 @@ uses
 type
   TCefDomNodeFilterProc = function(const ANode: ICefDomNode): Boolean;
 
+function CefVisitGetElementsRoot(const ARoot: ICefDomNode;
+  const AElement: TElementParams; const AFilter: TCefDomNodeFilterProc;
+  const ALimit: Integer): TArray<ICefDomNode>;
 function CefVisitGetElements(const ADocument: ICefDomDocument;
     const AElement: TElementParams; const AFilter: TCefDomNodeFilterProc;
     const ALimit: Integer): TArray<ICefDomNode>;
+function CefVisitGetElementRoot(const ARoot: ICefDomNode;
+  const AElement: TElementParams;
+  const AFilter: TCefDomNodeFilterProc): ICefDomNode;
 function CefVisitGetElement(const ADocument: ICefDomDocument;
     const AElement: TElementParams;
     const AFilter: TCefDomNodeFilterProc = nil): ICefDomNode;
@@ -27,7 +34,7 @@ uses
   //
   uRegExprFunc, uStringUtils;
 
-function CefVisitGetElements(const ADocument: ICefDomDocument;
+function CefVisitGetElementsRoot(const ARoot: ICefDomNode;
   const AElement: TElementParams; const AFilter: TCefDomNodeFilterProc;
   const ALimit: Integer): TArray<ICefDomNode>;
 var
@@ -78,7 +85,7 @@ var
                   Exit(True);
     Exit(False);
   end;
-  function ProcessNode(const ANode: ICefDomNode; const AList: TList<ICefDomNode>): Boolean;
+  function ProcessNode(const ANode: ICefDomNode; const AList: TList<ICefDomNode>; const ALevel: Integer): Boolean;
   var Node: ICefDomNode;
   begin
     if Assigned(ANode) then
@@ -92,7 +99,7 @@ var
           if AList.Count >= ALimit then
             Exit(True);
         end;
-        if ProcessNode(Node, AList) then
+        if ProcessNode(Node, AList, ALevel + 1) then
           Exit(True);
         Node := Node.NextSibling;
       end;
@@ -103,7 +110,7 @@ var
 
 begin
   Result := nil;
-  if ADocument = nil then
+  if ARoot = nil then
     Exit;
 
   l_class := LowerCase(Trim(AElement.Class_));
@@ -112,7 +119,7 @@ begin
 
   if AElement.Id <> '' then
   begin
-    l_elem := ADocument.getElementById(AElement.Id);
+    l_elem := ARoot.Document.getElementById(AElement.Id);
     if TestFilter(l_elem) then
     begin
       SetLength(Result, 1);
@@ -123,11 +130,21 @@ begin
 
   l_arr := TList<ICefDomNode>.Create;
   try
-    ProcessNode(ADocument.Body, l_arr);
+    ProcessNode(ARoot, l_arr, 0);
     Result := l_arr.ToArray;
   finally
     l_arr.Free
-  end
+  end;
+end;
+
+function CefVisitGetElements(const ADocument: ICefDomDocument;
+  const AElement: TElementParams; const AFilter: TCefDomNodeFilterProc;
+  const ALimit: Integer): TArray<ICefDomNode>;
+begin
+  Result := nil;
+  if ADocument = nil then
+    Exit;
+  Result := CefVisitGetElementsRoot(ADocument.Body, AElement, AFilter, ALimit)
 end;
 
 function CefVisitGetElement(const ADocument: ICefDomDocument;
@@ -140,6 +157,18 @@ begin
     Exit(arr[0]);
   Exit(nil)
 end;
+
+function CefVisitGetElementRoot(const ARoot: ICefDomNode;
+  const AElement: TElementParams;
+  const AFilter: TCefDomNodeFilterProc): ICefDomNode;
+var arr: TArray<ICefDomNode>;
+begin
+  arr := CefVisitGetElementsRoot(ARoot, AElement, AFilter, 1);
+  if Length(arr) > 0 then
+    Exit(arr[0]);
+  Exit(nil)
+end;
+
 
 function CefVisitGetElementByName(const ADocument: ICefDomDocument; const AName: string): ICefDomNode;
 begin
