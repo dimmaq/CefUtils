@@ -26,13 +26,13 @@ implementation
 uses
   uCEFProcessMessage, uCEFMiscFunctions,
   //
-  uCefUtilConst, uCefWaitEventList, uCefUtilFunc;
+  uCefUtilConst, uCefWaitEventList, uCefUtilFunc, uCefUIFunc;
 
 { TCefUIBrowserProcessMessageReceiverCommon }
 
 constructor TCefUIBrowserProcessMessageReceiverCommon.Create;
 begin
-  inherited Create(APP_CEF_RENDER_MESSAGE_NAME)
+  inherited Create(MYAPP_CEF_MESSAGE_NAME)
 end;
 
 procedure TCefUIBrowserProcessMessageReceiverCommon.Receive(Sender: TObject;
@@ -45,19 +45,31 @@ var
   z: string;
 begin
   AResult := False;
-  z := 'msgRecv:' + amessage.Name + ' ';
   arg := amessage.ArgumentList;
-  eventId := arg.GetInt(IDX_EVENT);
-  z := z + 'eid:' + IntToStr(eventId) + ' ';
-  event := CefWaitEventGet(eventId);
-  if Assigned(event) then
+  if arg.GetType(IDX_TYPE) = VTYPE_INT then
   begin
-    z := z + 'tick:' + IntToStr(event.TickDif()) + ' res:' + CefListValueToJsonStr(arg);
-    event.Res := arg.Copy();
-    event.Event.SetEvent();
     AResult := True;
+    arg := AMessage.ArgumentList;
+    case arg.GetInt(IDX_TYPE) of
+      VAL_CLICK_XY: CefUIClickAndCallback(ABrowser, arg);
+      VAL_KEY_PRESS: CefUIKeyPress(ABrowser, arg);
+    end;
+  end
+  else
+  begin
+    z := 'msgRecv:' + amessage.Name + ' ';
+    eventId := arg.GetInt(IDX_EVENT);
+    z := z + 'eid:' + IntToStr(eventId) + ' ';
+    event := CefWaitEventGet(eventId);
+    if Assigned(event) then
+    begin
+      z := z + 'tick:' + IntToStr(event.TickDif()) + ' res:' + CefListValueToJsonStr(arg);
+      event.Res := arg.Copy();
+      event.Event.SetEvent();
+      AResult := True;
+    end;
+    CefLog('frame', 138, 1, z);
   end;
-  CefLog('frame', 138, 1, z);
 end;
 
 initialization

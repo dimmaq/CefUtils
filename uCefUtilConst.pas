@@ -3,7 +3,7 @@ unit uCefUtilConst;
 interface
 
 const
-  APP_CEF_RENDER_MESSAGE_NAME = 'cefappmsg';
+  MYAPP_CEF_MESSAGE_NAME = 'cefappmsg';
 
   //IDX_DEBUG  = 0;
   IDX_TYPE   = 1;
@@ -25,6 +25,9 @@ const
   IDX_CLASS  = 17;
   IDX_VALUE2 = 18;
 
+  IDX_CALLBACKID = 19;
+
+
   KEY_TAG    = '_TAG_';
 
   VAL_TEST_ID_EXISTS      = 1;
@@ -39,6 +42,10 @@ const
   VAL_SET_ELEMENT_VALUE   = 10;
   VAL_SET_SELECT_VALUE    = 11;
   VAL_GET_ELEMENTS_ATTR   = 12;
+
+  VAL_EXEC_CALLBACK = 13;
+  VAL_CLICK_XY      = 14;
+  VAL_KEY_PRESS     = 15;
 
 
   SPEED_DEF = 1000;

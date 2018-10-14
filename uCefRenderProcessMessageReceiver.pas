@@ -78,7 +78,11 @@ end;
 procedure TCefRenderProcessMessageReceiverOwner.InitCefGlobalApp;
 begin
   if Assigned(GlobalCEFApp) then
+  begin
     GlobalCEFApp.OnProcessMessageReceived := Self.Receive;
+    //TODO: release callback list uCefCallbackList.pas
+    // GlobalCEFApp.OnContextReleased :=  release callback list ?
+  end;
 end;
 
 procedure TCefRenderProcessMessageReceiverOwner.Receive(const ABrowser: ICefBrowser;

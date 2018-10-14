@@ -37,6 +37,7 @@ function ElemByCefList(const A: ICefListValue): TElementParams;
 function CefAppMessageNew: ICefProcessMessage;
 function CefAppMessageArgs(var AArgs: ICefListValue): ICefProcessMessage;
 function CefAppMessageType(const AType: Integer; var AArgs: ICefListValue): ICefProcessMessage;
+function CefAppMessageTypeWithCallback(const AType, ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;
 function CefAppMessageTypeVal(const AType: Integer; const AValue: Integer): ICefProcessMessage;
 function CefAppMessageTypeElem(const AType: Integer; const AElem: TElementParams;
   var AArgs: ICefListValue): ICefProcessMessage; overload;
@@ -46,6 +47,10 @@ function CefAppMessageTypeElem(const AType: Integer; const AElem: TElementParams
   const AValue2: string; var AArgs: ICefListValue): ICefProcessMessage; overload;
 function CefAppMessageResultNew(const AResult: Boolean): ICefProcessMessage; overload;
 function CefAppMessageResultNew(const AResult: ICefListValue): ICefProcessMessage; overload;
+function CefAppMessageTypeExecCallback(const ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;  overload;
+function CefAppMessageTypeExecCallback(const ACallbackId: Integer): ICefProcessMessage;  overload;
+
+procedure CefExecJsCallback(const ABrowser: ICefBrowser; const AId: Integer);
 
 function CefStringMapToDictValue(const A: ICefStringMap): ICefDictionaryValue;
 
@@ -72,7 +77,7 @@ uses
 
 function CefAppMessageNew: ICefProcessMessage;
 begin
-  Result := TCefProcessMessageRef.New(APP_CEF_RENDER_MESSAGE_NAME);
+  Result := TCefProcessMessageRef.New(MYAPP_CEF_MESSAGE_NAME);
 end;
 
 function CefAppMessageArgs(var AArgs: ICefListValue): ICefProcessMessage;
@@ -85,6 +90,13 @@ function CefAppMessageType(const AType: Integer; var AArgs: ICefListValue): ICef
 begin
   Result := CefAppMessageArgs(AArgs);
   AArgs.SetInt(IDX_TYPE, AType);
+end;
+
+function CefAppMessageTypeWithCallback(const AType, ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;
+begin
+  Result := CefAppMessageArgs(AArgs);
+  AArgs.SetInt(IDX_TYPE, AType);
+  AArgs.SetInt(IDX_CALLBACKID, ACallbackId);
 end;
 
 function CefAppMessageTypeVal(const AType: Integer; const AValue: Integer): ICefProcessMessage;
@@ -130,6 +142,16 @@ begin
   arg.SetList(IDX_RESULT, AResult)
 end;
 
+function CefAppMessageTypeExecCallback(const ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;
+begin
+  Result := CefAppMessageTypeWithCallback(VAL_EXEC_CALLBACK, ACallbackId, AArgs);
+end;
+
+function CefAppMessageTypeExecCallback(const ACallbackId: Integer): ICefProcessMessage;
+var tmp: ICefListValue;
+begin
+  Result := CefAppMessageTypeExecCallback(ACallbackId, tmp);
+end;
 
 function CefStringMapToDictValue(const A: ICefStringMap): ICefDictionaryValue;
 var
@@ -373,5 +395,16 @@ begin
   ContextSetPreferenceIfCan(AContext, 'webrtc.ip_handling_policy', 'disable_non_proxied_udp');
   // media.device_id_salt is chrome-only preference, so there is no way to randomize device ids.
 end;
+
+procedure CefExecJsCallback(const ABrowser: ICefBrowser; const AId: Integer);
+var
+  msg: ICefProcessMessage;
+begin
+  if aid < 1 then
+    Exit;
+  msg := CefAppMessageTypeExecCallback(AId);
+  ABrowser.SendProcessMessage(PID_RENDERER, msg)
+end;
+
 
 end.

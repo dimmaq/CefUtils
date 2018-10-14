@@ -84,6 +84,10 @@ function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean; overload;
 procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint); overload;
 procedure CefUIMouseClick(const AAction: TCefScriptBase); overload;
+procedure CefUIClickAndCallback(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer); overload;
+procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer); overload;
+procedure CefUIKeyPress(const ABrowser: ICefBrowser; const AArg: ICefListValue);
 function CefUIDoScroll(const ACursor: TPoint; const AStep, ACount: Integer;
   const ABrowser: ICefBrowser; const AAbortEvent: TEvent; const ATimeout: Integer): Boolean;
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -670,6 +674,60 @@ begin
   CefUIMouseClick(AAction.Chromium.Browser, AAction.Controller.Cursor)
 end;
 
+procedure CefUIClickAndCallback(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+var x,y,id: Integer;
+begin
+  x := AArg.GetInt(IDX_X);
+  y := AArg.GetInt(IDX_Y);
+  CefUIMouseClick(ABrowser, TPoint.Create(x, y));
+  //
+  id := aarg.GetInt(IDX_CALLBACKID);
+  CefExecJsCallback(ABrowser, id);
+end;
+
+procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer);
+var
+  event: TCefKeyEvent;
+  VkCode: Byte;
+  scanCode: UINT;
+begin
+  FillMemory(@event, SizeOf(event), 0);
+  event.is_system_key := 0;
+  event.modifiers := 0;
+
+  VkCode := LOBYTE(VkKeyScan(Char(AkeyCode)));
+  scanCode := MapVirtualKey(VkCode, MAPVK_VK_TO_VSC);
+
+  event.native_key_code := (scanCode shl 16) or  // key scan code
+                             1;                  // key repeat count
+  event.windows_key_code := VkCode;
+  event.kind := KEYEVENT_RAWKEYDOWN;
+  ABrowser.Host.SendKeyEvent(@event);
+
+  event.windows_key_code := AKeyCode;
+  event.kind := KEYEVENT_CHAR;
+  ABrowser.Host.SendKeyEvent(@event);
+
+  event.windows_key_code := VkCode;
+  // bits 30 and 31 should be always 1 for WM_KEYUP
+  event.native_key_code := event.native_key_code or Integer($C0000000);
+  event.kind := KEYEVENT_KEYUP;
+  ABrowser.Host.SendKeyEvent(@event);
+end;
+
+procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer);
+begin
+  CefSendKeyEvent(ABrowser.Browser, AKeyCode)
+end;
+
+procedure CefUIKeyPress(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+var key: Integer;
+begin
+  key := AArg.GetInt(IDX_VALUE);
+  CefSendKeyEvent(ABrowser, key)
+end;
+
+
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ACursor: TPoint; const ATimeout, AStep, ADir, ATry: Integer): Boolean;
 var
@@ -781,38 +839,6 @@ begin
   Result := nil
 end;
 
-
-
-procedure SendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer);
-var
-  event: TCefKeyEvent;
-  VkCode: Byte;
-  scanCode: UINT;
-begin
-  FillMemory(@event, SizeOf(event), 0);
-  event.is_system_key := 0;
-  event.modifiers := 0;
-
-  VkCode := LOBYTE(VkKeyScan(Char(AkeyCode)));
-  scanCode := MapVirtualKey(VkCode, MAPVK_VK_TO_VSC);
-
-  event.native_key_code := (scanCode shl 16) or  // key scan code
-                             1;                  // key repeat count
-  event.windows_key_code := VkCode;
-  event.kind := KEYEVENT_RAWKEYDOWN;
-  ABrowser.SendKeyEvent(@event);
-
-  event.windows_key_code := AKeyCode;
-  event.kind := KEYEVENT_CHAR;
-  ABrowser.SendKeyEvent(@event);
-
-  event.windows_key_code := VkCode;
-  // bits 30 and 31 should be always 1 for WM_KEYUP
-  event.native_key_code := event.native_key_code or Integer($C0000000);
-  event.kind := KEYEVENT_KEYUP;
-  ABrowser.SendKeyEvent(@event);
-end;
-
 function CefUITypeText(const AAction: TCefScriptBase; const AText: string;
   const AElement: TElementParams): Boolean;
 var
@@ -828,7 +854,7 @@ begin
       CefUIMouseClick(AAction);
       for ch in AText do
       begin
-        SendKeyEvent(br, Ord(ch));
+        CefSendKeyEvent(br, Ord(ch));
         if SleepEvents(AAction.AbortEvent, nil, 500) <> wrTimeout then
           Exit(False)
       end;

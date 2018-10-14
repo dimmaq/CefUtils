@@ -28,7 +28,7 @@ uses
   //
   uCEFProcessMessage, uCEFMiscFunctions,
   //
-  uCefUtilConst, uCefRenderFunc, uCefUtilFunc;
+  uCefUtilConst, uCefRenderFunc, uCefUtilFunc, uCefUtilCallbackList;
 
 function TestIdExists(const ABrowser: ICefBrowser; const AId: string): ICefProcessMessage;
 var el: ICefDomNode;
@@ -153,12 +153,20 @@ begin
   Result := CefAppMessageResultNew(CefRenderGetElementsAttr(ABrowser, ElemByCefList(AArgs)))
 end;
 
+procedure RenderExecCallback(const ABrowser: ICefBrowser;
+  const AArgs: ICefListValue);
+var id: Integer;
+begin
+  id := AArgs.GetInt(IDX_CALLBACKID);
+  gCallbackList.Execute(id)
+end;
+
 
 { TCefRenderProcessMessageReceiverCommon }
 
 constructor TCefRenderProcessMessageReceiverCommon.Create;
 begin
-  inherited Create(APP_CEF_RENDER_MESSAGE_NAME);
+  inherited Create(MYAPP_CEF_MESSAGE_NAME);
 end;
 
 procedure TCefRenderProcessMessageReceiverCommon.Receive(
@@ -190,6 +198,7 @@ begin
     VAL_SET_ELEMENT_VALUE:   msg := SetElementValue(ABrowser, arg);
     VAL_SET_SELECT_VALUE:    msg := SetSelectValue(ABrowser, arg);
     VAL_GET_ELEMENTS_ATTR:   msg := GetElementsAttr(ABrowser, arg);
+    VAL_EXEC_CALLBACK:       RenderExecCallback(ABrowser, arg);
     {...}
     else
       msg := CefAppMessageNew();

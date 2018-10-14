@@ -6,6 +6,7 @@ uses
   System.SysUtils, System.Types, System.Generics.Collections, System.Math,
   //
   uCEFInterfaces, uCEFTypes, uCEFStringMap, uCEFListValue, uCEFDictionaryValue,
+  uCEFv8Context,
   //
   uCefUtilFunc;
 
@@ -31,11 +32,15 @@ function CefRenderGetElementText(const ABrowser: ICefBrowser;
 function CefRenderSelectSetValue(const browser: ICefBrowser;
   const ASelect: TElementParams; const AValue: string): Boolean;
 
+procedure CefRenderClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
+procedure CefRenderKeyPressInBrowser(const AKey: Integer);
+
 implementation
 
 uses
+
   //
-  uCefDomVisitFunc, uCefUtilConst;
+  uCefDomVisitFunc, uCefUtilConst, uCefUtilCallbackList;
 
 function CefRenderGetElementById(const browser: ICefBrowser; const AId: string): ICefDomNode;
 var res: ICefDomNode;
@@ -351,6 +356,33 @@ begin
     end
   );
   Result := res
+end;
+
+procedure CefRenderClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
+var
+  msg: ICefProcessMessage;
+  arg: ICefListValue;
+  cbId: Integer;
+begin
+  cbId := 0;
+  if Assigned(ACallback) and ACallback.IsFunction then
+  begin
+    cbId := gCallbackList.Add(ACallback);
+  end;
+  msg := CefAppMessageTypeWithCallback(VAL_CLICK_XY, cbId, arg);
+  arg.SetInt(IDX_X, x);
+  arg.SetInt(IDX_Y, y);
+  TCefv8ContextRef.Current.Browser.SendProcessMessage(PID_BROWSER, msg);
+end;
+
+procedure CefRenderKeyPressInBrowser(const AKey: Integer);
+var
+  msg: ICefProcessMessage;
+  arg: ICefListValue;
+begin
+  msg := CefAppMessageType(VAL_KEY_PRESS, arg);
+  arg.SetInt(IDX_VALUE, AKey);
+  TCefv8ContextRef.Current.Browser.SendProcessMessage(PID_BROWSER, msg);
 end;
 
 end.
