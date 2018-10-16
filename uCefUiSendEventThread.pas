@@ -118,24 +118,33 @@ begin
 end;
 
 procedure TCefSendEventThread.StartNextTask;
+var proc: TCefSendEventTaskProc;
 begin
   if FQueue.Count = 0 then
     Exit;
+  proc := nil;
   FLock.Enter;
   try
-    while (FQueue.Count > 0) and not Aborted do
+    if FQueue.Count > 0 then
+      proc := FQueue.Dequeue();
+
+{    while (FQueue.Count > 0) and not Aborted do
     begin
-      StartTask(FQueue.Dequeue());
+      proc := FQueue.Dequeue();
     end;
+    }
     FEvent.ResetEvent();
   finally
     FLock.Leave
   end;
+  if not Aborted then
+    StartTask(proc);
 end;
 
 procedure TCefSendEventThread.StartTask(const AProc: TCefSendEventTaskProc);
 begin
-  AProc(Self)
+  if Assigned(AProc) then
+    AProc(Self)
 end;
 
 initialization
