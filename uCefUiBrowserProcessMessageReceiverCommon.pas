@@ -51,7 +51,7 @@ begin
     AResult := True;
     arg := AMessage.ArgumentList;
     case arg.GetInt(IDX_TYPE) of
-      VAL_CLICK_XY: CefUIClickAndCallback(ABrowser, arg);
+      VAL_CLICK_XY: CefUIClickAndCallbackAsync(ABrowser, arg);
       VAL_KEY_PRESS: CefUIKeyPress(ABrowser, arg);
     end;
   end

@@ -84,7 +84,7 @@ function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean; overload;
 procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint); overload;
 procedure CefUIMouseClick(const AAction: TCefScriptBase); overload;
-procedure CefUIClickAndCallback(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+procedure CefUIClickAndCallbackAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
 procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer); overload;
 procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer); overload;
 procedure CefUIKeyPress(const ABrowser: ICefBrowser; const AArg: ICefListValue);
@@ -121,7 +121,7 @@ uses
   //
   uGlobalFunctions,
   //
-  uCefUtilConst, uCefWaitEventList;
+  uCefUtilConst, uCefWaitEventList, uCefUiSendEventThread;
 
 
 function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -662,11 +662,11 @@ begin
   mouseEvent.x := APoint.X;
   mouseEvent.y := APoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
-  Sleep(50);
+//  Sleep(200);
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, False, 1);
   Sleep(100);
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, True, 1);
-  Sleep(50);
+//  Sleep(200);
 end;
 
 procedure CefUIMouseClick(const AAction: TCefScriptBase);
@@ -674,15 +674,20 @@ begin
   CefUIMouseClick(AAction.Chromium.Browser, AAction.Controller.Cursor)
 end;
 
-procedure CefUIClickAndCallback(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+procedure CefUIClickAndCallbackAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
 var x,y,id: Integer;
 begin
   x := AArg.GetInt(IDX_X);
   y := AArg.GetInt(IDX_Y);
-  CefUIMouseClick(ABrowser, TPoint.Create(x, y));
-  //
   id := aarg.GetInt(IDX_CALLBACKID);
-  CefExecJsCallback(ABrowser, id);
+
+  CefSendEventThreadTaskAdd(
+    procedure(const A: TCefSendEventThread)
+    begin
+      CefUIMouseClick(ABrowser, TPoint.Create(x, y));
+      CefExecJsCallback(ABrowser, id);
+    end
+  );
 end;
 
 procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer);
@@ -703,11 +708,11 @@ begin
   event.windows_key_code := VkCode;
   event.kind := KEYEVENT_RAWKEYDOWN;
   ABrowser.Host.SendKeyEvent(@event);
-
+  Sleep(50);
   event.windows_key_code := AKeyCode;
   event.kind := KEYEVENT_CHAR;
   ABrowser.Host.SendKeyEvent(@event);
-
+  Sleep(50);
   event.windows_key_code := VkCode;
   // bits 30 and 31 should be always 1 for WM_KEYUP
   event.native_key_code := event.native_key_code or Integer($C0000000);
