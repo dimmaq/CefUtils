@@ -119,8 +119,12 @@ function CefUIGetElementAttrValue(const AAction: TCefScriptBase;
 
 implementation
 
+//{$DEFINE LOG_XY}
+
 uses
-//    uMainForm,
+  {$IFDEF LOG_XY}
+  uMainForm,
+  {$ENDIF}
   //
   Winapi.Windows, System.Math, Vcl.Forms,
   //
@@ -524,7 +528,8 @@ begin
   mouseEvent.y := AToPoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
 
-      //MainForm.Log.Warning('*set point: ' + AToPoint.x.ToString + ':' + AToPoint.y.ToString);
+   {$IFDEF LOG_XY}MainForm.Log.Warning('*set point: ' + AToPoint.x.ToString + ':' + AToPoint.y.ToString);{$ENDIF}
+
   ABrowser.Host.SendMouseMoveEvent(@mouseEvent, False);
 
   // CefUIMouseSetPointVisual(ABrowser, AToPoint);
@@ -670,13 +675,17 @@ begin
   mouseEvent.x := APoint.X;
   mouseEvent.y := APoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
-      //MainForm.Log.Warning('*mouse_down: ' + APoint.x.ToString + ':' + APoint.y.ToString);
+
+  {$IFDEF LOG_XY} MainForm.Log.Warning('*mouse_down: ' + APoint.x.ToString + ':' + APoint.y.ToString); {$ENDIF}
+
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, False, 1);
   if ATimeout > 0 then
   begin
     SleepEvents(AAbortEvent, nil, ATimeout);
   end;
-       //   MainForm.Log.Warning('*mouse_up: ' + APoint.x.ToString + ':' + APoint.y.ToString);
+
+   {$IFDEF LOG_XY} MainForm.Log.Warning('*mouse_up: ' + APoint.x.ToString + ':' + APoint.y.ToString); {$ENDIF}
+
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, True, 1);
 end;
 
@@ -753,20 +762,22 @@ begin
                              1;                  // key repeat count
   event.windows_key_code := VkCode;
 
+
+      {$IFDEF LOG_XY}  {$ENDIF}
   event.kind := KEYEVENT_RAWKEYDOWN;
-  //   MainForm.Log.Warning('*key_down: ' + VkCode.ToString);
+      {$IFDEF LOG_XY} MainForm.Log.Warning('*key_down: ' + VkCode.ToString); {$ENDIF}
   ABrowser.Host.SendKeyEvent(@event);
   sleep_(ATimeout div 2);
   event.windows_key_code := AKeyCode;
   event.kind := KEYEVENT_CHAR;
-    //   MainForm.Log.Warning('*key_char: ' + VkCode.ToString);
+      {$IFDEF LOG_XY} MainForm.Log.Warning('*key_char: ' + VkCode.ToString); {$ENDIF}
   ABrowser.Host.SendKeyEvent(@event);
   sleep_(ATimeout);
   event.windows_key_code := VkCode;
   // bits 30 and 31 should be always 1 for WM_KEYUP
   event.native_key_code := event.native_key_code or Integer($C0000000);
   event.kind := KEYEVENT_KEYUP;
-    //   MainForm.Log.Warning('*key_up: ' + VkCode.ToString);
+      {$IFDEF LOG_XY} MainForm.Log.Warning('*key_up: ' + VkCode.ToString); {$ENDIF}
   ABrowser.Host.SendKeyEvent(@event);
 end;
 
