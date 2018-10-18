@@ -13,14 +13,22 @@ uses
 type
   TCefSendEventThread = class;
 
-  TCefSendEventTaskProc = reference to procedure(const AOwner: TCefSendEventThread);
+  TCefSendEventTaskItem = class abstract
+  protected
+    FOwner: TCefSendEventThread;
+    FBrowser: ICefBrowser;
+    FArgs: ICefListValue;
+    procedure Execute; virtual; abstract;
+  public
+    constructor Create(const ABrowser: ICefBrowser; const AArgs: ICefListValue);
+  end;
+
 
   TCefSendEventThread = class(TWorkThreadBase)
   private
     FLock: TCriticalSection;
     FEvent: TEvent;
-    FQueue: TQueue<TCefSendEventTaskProc>;
-    procedure StartTask(const AProc: TCefSendEventTaskProc);
+    FQueue: TList<TCefSendEventTaskItem>;
     procedure StartNextTask;
   protected
     procedure Execute; override;
@@ -28,26 +36,28 @@ type
     constructor Create;
     destructor Destroy; override;
     //
-    procedure AddTask(const AProc: TCefSendEventTaskProc);
+    procedure AddTask(const ATask: TCefSendEventTaskItem);
   end;
 
 
-procedure CefSendEventThreadInit;
+procedure CefSendEventThreadInit(OnTErminated: TNotifyEvent);
 procedure CefSendEventThreadFinal;
-procedure CefSendEventThreadTaskAdd(const AProc: TCefSendEventTaskProc);
+procedure CefSendEventThreadTaskAdd(const ATask: TCefSendEventTaskItem);
+
 
 implementation
 
 var
   gQueueThread: TCefSendEventThread;
 
-procedure CefSendEventThreadInit;
+procedure CefSendEventThreadInit(OnTErminated: TNotifyEvent);
 begin
   Assert(gQueueThread = nil, 'CefSendEventThread already init');
 
   if not Assigned(gQueueThread) then
   begin
     gQueueThread := TCefSendEventThread.Create;
+    gQueueThread.OnTerminate := OnTErminated;
     gQueueThread.Start();
   end;
 end;
@@ -62,12 +72,12 @@ begin
   end;
 end;
 
-procedure CefSendEventThreadTaskAdd(const AProc: TCefSendEventTaskProc);
+procedure CefSendEventThreadTaskAdd(const ATask: TCefSendEventTaskItem);
 begin
   Assert(gQueueThread <> nil, 'CefSendEventThread not init');
 
   if Assigned(gQueueThread) then
-    gQueueThread.AddTask(AProc);
+    gQueueThread.AddTask(ATask);
 end;
 
 { TCefSendEventThread }
@@ -80,12 +90,17 @@ begin
   //
   FLock := TCriticalSection.Create;
   FEvent := TEvent.Create(nil, True, False, '');
-  FQueue := TQueue<TCefSendEventTaskProc>.Create;
+  FQueue := TList<TCefSendEventTaskItem>.Create;
 end;
 
 destructor TCefSendEventThread.Destroy;
 begin
   FLock.Enter;
+  while FQueue.Count > 0 do
+  begin
+    FQueue.Last.Free;
+    FQueue.Delete(FQueue.Count - 1);
+  end;
   FreeAndNil(FQueue);
   FreeAndNil(FEvent);
   FreeAndNil(FLock);
@@ -93,24 +108,23 @@ begin
 end;
 
 procedure TCefSendEventThread.Execute;
-var signaled: THandleObject;
 begin
-  while not Aborted do
-  begin
-    signaled := Sleep(1000, FEvent);
-    if Aborted then
-      Exit;
-    //
-    if signaled = FEvent then
-      StartNextTask();
-  end;
+    while not Aborted do
+    begin
+      Sleep(60000, FEvent);
+      if Aborted then
+        Exit
+      else
+      if FQueue.Count > 0 then
+        StartNextTask()
+    end;
 end;
 
-procedure TCefSendEventThread.AddTask(const AProc: TCefSendEventTaskProc);
+procedure TCefSendEventThread.AddTask(const ATask: TCefSendEventTaskItem);
 begin
   FLock.Enter;
   try
-    FQueue.Enqueue(AProc);
+    FQueue.Add(ATask);
     FEvent.SetEvent();
   finally
     FLock.Leave
@@ -118,33 +132,50 @@ begin
 end;
 
 procedure TCefSendEventThread.StartNextTask;
-var proc: TCefSendEventTaskProc;
+const
+  LEN = 10;
+var
+  arr: TArray<TCefSendEventTaskItem>;
+  task: TCefSendEventTaskItem;
+  j: Integer;
 begin
-  if FQueue.Count = 0 then
-    Exit;
-  proc := nil;
   FLock.Enter;
   try
-    if FQueue.Count > 0 then
-      proc := FQueue.Dequeue();
-
-{    while (FQueue.Count > 0) and not Aborted do
+    arr := FQueue.ToArray();
+    while FQueue.Count > 0 do
     begin
-      proc := FQueue.Dequeue();
+      FQueue.Delete(FQueue.Count - 1);
     end;
-    }
     FEvent.ResetEvent();
   finally
     FLock.Leave
   end;
-  if not Aborted then
-    StartTask(proc);
+  try
+    for j := 0 to Length(arr) - 1 do
+    begin
+      task := arr[j];
+      if not Aborted then
+        if Assigned(task) then
+          task.Execute();
+    end;
+  finally
+    for j := 0 to Length(arr) - 1 do
+    begin
+      task := arr[j];
+      task.Free;
+    end;
+  end;
 end;
 
-procedure TCefSendEventThread.StartTask(const AProc: TCefSendEventTaskProc);
+{ TCefSendEventTaskItem }
+
+constructor TCefSendEventTaskItem.Create(const ABrowser: ICefBrowser;
+  const AArgs: ICefListValue);
 begin
-  if Assigned(AProc) then
-    AProc(Self)
+  inherited Create;
+  FBrowser := ABrowser;
+  FArgs := AArgs.Copy();
+  FOwner := gQueueThread;
 end;
 
 initialization

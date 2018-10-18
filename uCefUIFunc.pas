@@ -82,12 +82,15 @@ function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: In
   const AElement: TElementParams): Boolean; overload;
 function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean; overload;
-procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint); overload;
+procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint;
+  const ATimeout: Integer; const AAbortEvent: TEvent); overload;
 procedure CefUIMouseClick(const AAction: TCefScriptBase); overload;
 procedure CefUIClickAndCallbackAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
-procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer); overload;
+procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer;
+  const AAbordEvent: TEvent; const ATimeout: Integer); overload;
 procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer); overload;
 procedure CefUIKeyPress(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+procedure CefUIKeyPressAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
 function CefUIDoScroll(const ACursor: TPoint; const AStep, ACount: Integer;
   const ABrowser: ICefBrowser; const AAbortEvent: TEvent; const ATimeout: Integer): Boolean;
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -117,6 +120,8 @@ function CefUIGetElementAttrValue(const AAction: TCefScriptBase;
 implementation
 
 uses
+    uMainForm,
+  //
   Winapi.Windows, System.Math, Vcl.Forms,
   //
   uGlobalFunctions,
@@ -499,6 +504,11 @@ begin
       AElement.Name, AElement.Class_, AElement.AttrName, AElement.AttrValue)
 end;
 
+procedure CefUIMouseSetPointVisual(const ABrowser: ICefBrowser; AToPoint: TPoint);
+begin
+  ABrowser.MainFrame.ExecuteJavaScript('mymouse00 = document.getElementById(''mymouse00''); mymouse00.style.left = "'+IntToStr(AToPoint.X+2)+'px"; mymouse00.style.top = "'+IntToStr(AToPoint.Y+2)+'px";', '', 0);
+end;
+
 function CefUIMouseSetToPoint(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const AMousePos: PPoint; const AToPoint: TPoint; const ATimeout: Integer): Boolean;
 var
@@ -514,15 +524,12 @@ begin
   mouseEvent.y := AToPoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
 
+      MainForm.Log.Warning('*set point: ' + AToPoint.x.ToString + ':' + AToPoint.y.ToString);
   ABrowser.Host.SendMouseMoveEvent(@mouseEvent, False);
-  ABrowser.MainFrame.ExecuteJavaScript('mymouse00 = document.getElementById(''mymouse00''); mymouse00.style.left = "'+IntToStr(mouseEvent.x+2)+'px"; mymouse00.style.top = "'+IntToStr(mouseEvent.y+2)+'px";', '', 0);
 
-  if MainThreadID = GetCurrentThreadId then
-  begin
-    Application.ProcessMessages;
-    Sleep(ATimeout)
-  end
-  else
+  // CefUIMouseSetPointVisual(ABrowser, AToPoint);
+
+  if ATimeout > 0 then
   begin
     if SleepEvents(AAbortEvent, nil, ATimeout) <> wrTimeout then
       Exit(False)
@@ -656,46 +663,85 @@ begin
       AElement.Name, AElement.Class_, AElement.AttrName, AElement.AttrValue)
 end;
 
-procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint);
+procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint;
+  const ATimeout: Integer; const AAbortEvent: TEvent);
 var mouseEvent: TCefMouseEvent;
 begin
   mouseEvent.x := APoint.X;
   mouseEvent.y := APoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
-//  Sleep(200);
+      MainForm.Log.Warning('*mouse_down: ' + APoint.x.ToString + ':' + APoint.y.ToString);
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, False, 1);
-  Sleep(100);
+  if ATimeout > 0 then
+  begin
+    SleepEvents(AAbortEvent, nil, ATimeout);
+  end;
+          MainForm.Log.Warning('*mouse_up: ' + APoint.x.ToString + ':' + APoint.y.ToString);
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, True, 1);
-//  Sleep(200);
 end;
+
+const
+  CLICK_PAUSE_DEF = 50;
 
 procedure CefUIMouseClick(const AAction: TCefScriptBase);
 begin
-  CefUIMouseClick(AAction.Chromium.Browser, AAction.Controller.Cursor)
+  CefUIMouseClick(AAction.Chromium.Browser, AAction.Controller.Cursor,
+    CLICK_PAUSE_DEF, AAction.AbortEvent)
+end;
+
+type
+  TClickTask = class(TCefSendEventTaskItem)
+  protected
+    procedure Execute; override;
+  end;
+
+{ TClickTask }
+
+procedure TClickTask.Execute;
+var
+  p: TPoint;
+  x,y,id: Integer;
+begin
+  x := FArgs.GetInt(IDX_CLICK_X);
+  y := FArgs.GetInt(IDX_CLICK_Y);
+  id := FArgs.GetInt(IDX_CLICK_CALLBACKID);
+  p := TPoint.Create(x, y);
+  CefUIMouseSetToPoint(FBrowser, FOwner.AbortEvent, nil, p, CLICK_PAUSE_DEF div 10);
+  if not FOwner.IsAborted then
+  begin
+    CefUIMouseClick(FBrowser, p, CLICK_PAUSE_DEF, FOwner.AbortEvent);
+    //
+    if not FOwner.IsAborted then
+    begin
+      CefExecJsCallback(FBrowser, id);
+    end;
+  end;
 end;
 
 procedure CefUIClickAndCallbackAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
-var x,y,id: Integer;
 begin
-  x := AArg.GetInt(IDX_X);
-  y := AArg.GetInt(IDX_Y);
-  id := aarg.GetInt(IDX_CALLBACKID);
-
-  CefSendEventThreadTaskAdd(
-    procedure(const A: TCefSendEventThread)
-    begin
-      CefUIMouseClick(ABrowser, TPoint.Create(x, y));
-      CefExecJsCallback(ABrowser, id);
-    end
-  );
+  CefSendEventThreadTaskAdd(TClickTask.Create(ABrowser, AArg))
 end;
 
-procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer);
+procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer;
+  const AAbordEvent: TEvent; const ATimeout: Integer);
+
+  procedure sleep_(ms: Integer);
+  begin
+    if ms > 0 then
+      if AAbordEvent = nil then
+        Sleep(ms)
+      else
+        SleepEvents(AAbordEvent, nil, ms)
+  end;
+
 var
   event: TCefKeyEvent;
   VkCode: Byte;
   scanCode: UINT;
 begin
+ // AKeyCode := VK_ESCAPE;
+
   FillMemory(@event, SizeOf(event), 0);
   event.is_system_key := 0;
   event.modifiers := 0;
@@ -706,32 +752,61 @@ begin
   event.native_key_code := (scanCode shl 16) or  // key scan code
                              1;                  // key repeat count
   event.windows_key_code := VkCode;
+
   event.kind := KEYEVENT_RAWKEYDOWN;
+     MainForm.Log.Warning('*key_down: ' + VkCode.ToString);
   ABrowser.Host.SendKeyEvent(@event);
-  Sleep(50);
+  sleep_(ATimeout div 2);
   event.windows_key_code := AKeyCode;
   event.kind := KEYEVENT_CHAR;
+       MainForm.Log.Warning('*key_char: ' + VkCode.ToString);
   ABrowser.Host.SendKeyEvent(@event);
-  Sleep(50);
+  sleep_(ATimeout);
   event.windows_key_code := VkCode;
   // bits 30 and 31 should be always 1 for WM_KEYUP
   event.native_key_code := event.native_key_code or Integer($C0000000);
   event.kind := KEYEVENT_KEYUP;
+       MainForm.Log.Warning('*key_up: ' + VkCode.ToString);
   ABrowser.Host.SendKeyEvent(@event);
 end;
 
 procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer);
 begin
-  CefSendKeyEvent(ABrowser.Browser, AKeyCode)
+  CefSendKeyEvent(ABrowser.Browser, AKeyCode, nil, CLICK_PAUSE_DEF)
 end;
 
 procedure CefUIKeyPress(const ABrowser: ICefBrowser; const AArg: ICefListValue);
 var key: Integer;
 begin
   key := AArg.GetInt(IDX_VALUE);
-  CefSendKeyEvent(ABrowser, key)
+  CefSendKeyEvent(ABrowser, key, nil, CLICK_PAUSE_DEF)
 end;
 
+
+type
+  TKeyboardTask = class(TCefSendEventTaskItem)
+    procedure Execute; override;
+  end;
+
+{ TKeyboardTask }
+
+procedure TKeyboardTask.Execute;
+var
+  key, id: Integer;
+begin
+  id := FArgs.GetInt(IDX_KEY_CALLBACKID);
+  key := FArgs.GetInt(IDX_KEY_CODE);
+  CefSendKeyEvent(FBrowser, key, FOwner.AbortEvent, CLICK_PAUSE_DEF);
+  if not FOwner.IsAborted then
+  begin
+    CefExecJsCallback(FBrowser, id);
+  end;
+end;
+
+procedure CefUIKeyPressAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+begin
+  CefSendEventThreadTaskAdd(TKeyboardTask.Create(ABrowser, AArg));
+end;
 
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ACursor: TPoint; const ATimeout, AStep, ADir, ATry: Integer): Boolean;
@@ -888,6 +963,5 @@ begin
   end;
   Exit('')
 end;
-
 
 end.

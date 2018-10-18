@@ -157,7 +157,7 @@ procedure RenderExecCallback(const ABrowser: ICefBrowser;
   const AArgs: ICefListValue);
 var id: Integer;
 begin
-  id := AArgs.GetInt(IDX_CALLBACKID);
+  id := AArgs.GetInt(IDX_CALLBACK_ID);
   gCallbackList.Execute(id)
 end;
 

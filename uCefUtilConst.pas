@@ -6,7 +6,8 @@ const
   MYAPP_CEF_MESSAGE_NAME = 'cefappmsg';
 
   //IDX_DEBUG  = 0;
-  IDX_TYPE   = 1;
+  IDX_TYPE   = 0;
+
   IDX_EVENT  = 2;
   IDX_RESULT = 3;
   IDX_VALUE  = 4;
@@ -25,8 +26,14 @@ const
   IDX_CLASS  = 17;
   IDX_VALUE2 = 18;
 
-  IDX_CALLBACKID = 19;
+  IDX_CLICK_CALLBACKID = 1;
+  IDX_CLICK_X = 2;
+  IDX_CLICK_Y = 3;
 
+  IDX_KEY_CALLBACKID = 1;
+  IDX_KEY_CODE = 2;
+
+  IDX_CALLBACK_ID = 1;
 
   KEY_TAG    = '_TAG_';
 

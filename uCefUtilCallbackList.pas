@@ -40,9 +40,13 @@ implementation
 function TCefCallbackContainer.Add(const AFunc: ICefv8Value): Integer;
 var item: TCefCallbackItem;
 begin
+  Result := 0;
+  if (not Assigned(AFunc)) or (not AFunc.IsFunction) then
+    Exit;
+  //
   FLock.Enter;
   try
-    CefDebugLog('cb/Add');
+//    CefDebugLog('cb/Add');
     item := TCefCallbackItem.Create(afunc);
     FList.Add(item);
     Result := item.Id;
@@ -58,7 +62,7 @@ var
 begin
   FLock.Enter;
   try
-    CefDebugLog('cb/ContextRelease');
+   // CefDebugLog('cb/ContextRelease');
     for j := FList.Count - 1 downto 0 do
     begin
       item := FList[j];
@@ -90,7 +94,7 @@ var
 begin
   FLock.Enter;
   try
-    CefDebugLog('cb/exec');
+   // CefDebugLog('cb/exec');
     for j := 0 to FList.Count - 1 do
     begin
       item := FList[j];

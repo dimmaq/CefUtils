@@ -45,19 +45,18 @@ var
   z: string;
 begin
   AResult := False;
-  arg := amessage.ArgumentList;
+  arg := AMessage.ArgumentList;
   if arg.GetType(IDX_TYPE) = VTYPE_INT then
   begin
     AResult := True;
-    arg := AMessage.ArgumentList;
     case arg.GetInt(IDX_TYPE) of
       VAL_CLICK_XY: CefUIClickAndCallbackAsync(ABrowser, arg);
-      VAL_KEY_PRESS: CefUIKeyPress(ABrowser, arg);
+      VAL_KEY_PRESS: CefUIKeyPressAsync(ABrowser, arg);
     end;
   end
   else
   begin
-    z := 'msgRecv:' + amessage.Name + ' ';
+    z := 'msgRecv:' + AMessage.Name + ' ';
     eventId := arg.GetInt(IDX_EVENT);
     z := z + 'eid:' + IntToStr(eventId) + ' ';
     event := CefWaitEventGet(eventId);

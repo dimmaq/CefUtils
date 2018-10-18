@@ -33,7 +33,7 @@ function CefRenderSelectSetValue(const browser: ICefBrowser;
   const ASelect: TElementParams; const AValue: string): Boolean;
 
 procedure CefRenderClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
-procedure CefRenderKeyPressInBrowser(const AKey: Integer);
+procedure CefRenderKeyPressInBrowser(const AKey: Integer; const ACallback: ICefv8Value);
 
 implementation
 
@@ -364,25 +364,27 @@ var
   arg: ICefListValue;
   cbId: Integer;
 begin
-  cbId := 0;
-  if Assigned(ACallback) and ACallback.IsFunction then
-  begin
-    cbId := gCallbackList.Add(ACallback);
-  end;
-  msg := CefAppMessageTypeWithCallback(VAL_CLICK_XY, cbId, arg);
-  arg.SetInt(IDX_X, x);
-  arg.SetInt(IDX_Y, y);
-  TCefv8ContextRef.Current.Browser.SendProcessMessage(PID_BROWSER, msg);
+  cbId := gCallbackList.Add(ACallback);
+
+  msg := CefAppMessageType(VAL_CLICK_XY, arg);
+  arg.SetInt(IDX_CLICK_CALLBACKID, cbId);
+  arg.SetInt(IDX_CLICK_X, x);
+  arg.SetInt(IDX_CLICK_Y, y);
+  CefSendProcessMessageCurrentContextToBrowser(msg);
 end;
 
-procedure CefRenderKeyPressInBrowser(const AKey: Integer);
+procedure CefRenderKeyPressInBrowser(const AKey: Integer; const ACallback: ICefv8Value);
 var
   msg: ICefProcessMessage;
   arg: ICefListValue;
+  cbId: Integer;
 begin
+  cbId := gCallbackList.Add(ACallback);
+
   msg := CefAppMessageType(VAL_KEY_PRESS, arg);
-  arg.SetInt(IDX_VALUE, AKey);
-  TCefv8ContextRef.Current.Browser.SendProcessMessage(PID_BROWSER, msg);
+  arg.SetInt(IDX_KEY_CALLBACKID, cbId);
+  arg.SetInt(IDX_KEY_CODE, AKey);
+  CefSendProcessMessageCurrentContextToBrowser(msg);
 end;
 
 end.

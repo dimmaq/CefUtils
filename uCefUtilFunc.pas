@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types,
   //
-  uCEFInterfaces;
+  uCEFInterfaces, uCEFTypes;
 
 type
   ECefError = class(Exception);
@@ -29,6 +29,8 @@ type
     function IsEmpty: Boolean;
   end;
 
+function CefSendProcessMessageCurrentContextToBrowser(const AMsg: ICefProcessMessage): Boolean;
+
 function ElemFilt(const ATag, AId, AName, AClass, AAttrName, AAttrValue: string): TElementParams;
 function ElemById(const AId: string; const ATag: string = ''): TElementParams;
 function ElemByAttr(const ATag, AAttrName, AAttrValue: string): TElementParams;
@@ -37,7 +39,6 @@ function ElemByCefList(const A: ICefListValue): TElementParams;
 function CefAppMessageNew: ICefProcessMessage;
 function CefAppMessageArgs(var AArgs: ICefListValue): ICefProcessMessage;
 function CefAppMessageType(const AType: Integer; var AArgs: ICefListValue): ICefProcessMessage;
-function CefAppMessageTypeWithCallback(const AType, ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;
 function CefAppMessageTypeVal(const AType: Integer; const AValue: Integer): ICefProcessMessage;
 function CefAppMessageTypeElem(const AType: Integer; const AElem: TElementParams;
   var AArgs: ICefListValue): ICefProcessMessage; overload;
@@ -69,7 +70,7 @@ implementation
 
 uses
   //
-  uCEFStringMap, uCEFDictionaryValue, uCEFTypes, uCefTask, uCEFValue,
+  uCEFStringMap, uCEFDictionaryValue, uCefTask, uCEFValue, uCefv8Context,
   //
   uGlobalFunctions,
   //
@@ -90,13 +91,6 @@ function CefAppMessageType(const AType: Integer; var AArgs: ICefListValue): ICef
 begin
   Result := CefAppMessageArgs(AArgs);
   AArgs.SetInt(IDX_TYPE, AType);
-end;
-
-function CefAppMessageTypeWithCallback(const AType, ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;
-begin
-  Result := CefAppMessageArgs(AArgs);
-  AArgs.SetInt(IDX_TYPE, AType);
-  AArgs.SetInt(IDX_CALLBACKID, ACallbackId);
 end;
 
 function CefAppMessageTypeVal(const AType: Integer; const AValue: Integer): ICefProcessMessage;
@@ -144,7 +138,8 @@ end;
 
 function CefAppMessageTypeExecCallback(const ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;
 begin
-  Result := CefAppMessageTypeWithCallback(VAL_EXEC_CALLBACK, ACallbackId, AArgs);
+  Result := CefAppMessageType(VAL_EXEC_CALLBACK, AArgs);
+  AArgs.SetInt(IDX_CALLBACK_ID, ACallbackId)
 end;
 
 function CefAppMessageTypeExecCallback(const ACallbackId: Integer): ICefProcessMessage;
@@ -396,6 +391,33 @@ begin
   // media.device_id_salt is chrome-only preference, so there is no way to randomize device ids.
 end;
 
+function CefSendProcessMessageBrowser(const ABrowser: ICefBrowser;
+  const ATarget: TCefProcessId; const AMsg: ICefProcessMessage): Boolean;
+begin
+  Result := ABrowser.SendProcessMessage(ATarget, AMsg);
+end;
+
+function CefSendProcessMessageBrowserToRender(const ABrowser: ICefBrowser;
+  const AMsg: ICefProcessMessage): Boolean;
+begin
+  Result := CefSendProcessMessageBrowser(ABrowser, PID_RENDERER, AMsg);
+end;
+
+function CefSendProcessMessageCurrentContext(const ATarget: TCefProcessId; const AMsg: ICefProcessMessage): Boolean;
+begin
+  Result := CefSendProcessMessageBrowser(TCefv8ContextRef.Current.Browser, ATarget, AMsg);
+end;
+
+function CefSendProcessMessageCurrentContextToRender(const AMsg: ICefProcessMessage): Boolean;
+begin
+  Result := CefSendProcessMessageCurrentContext(PID_RENDERER, AMsg);
+end;
+
+function CefSendProcessMessageCurrentContextToBrowser(const AMsg: ICefProcessMessage): Boolean;
+begin
+  Result := CefSendProcessMessageCurrentContext(PID_BROWSER, AMsg);
+end;
+
 procedure CefExecJsCallback(const ABrowser: ICefBrowser; const AId: Integer);
 var
   msg: ICefProcessMessage;
@@ -403,8 +425,7 @@ begin
   if aid < 1 then
     Exit;
   msg := CefAppMessageTypeExecCallback(AId);
-  ABrowser.SendProcessMessage(PID_RENDERER, msg)
+  CefSendProcessMessageBrowserToRender(ABrowser, msg)
 end;
-
 
 end.
