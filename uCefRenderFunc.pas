@@ -32,6 +32,7 @@ function CefRenderGetElementText(const ABrowser: ICefBrowser;
 function CefRenderSelectSetValue(const browser: ICefBrowser;
   const ASelect: TElementParams; const AValue: string): Boolean;
 
+procedure CefRenderFocusClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
 procedure CefRenderClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
 procedure CefRenderKeyPressInBrowser(const AKey: Integer; const ACallback: ICefv8Value);
 
@@ -358,20 +359,31 @@ begin
   Result := res
 end;
 
-procedure CefRenderClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
+procedure FocusClickInBrowser(const AFocus: Boolean; const x, y: Integer; const ACallback: ICefv8Value);
 var
   msg: ICefProcessMessage;
   arg: ICefListValue;
-  cbId: Integer;
+  cbId, k: Integer;
 begin
   cbId := gCallbackList.Add(ACallback);
-
-  msg := CefAppMessageType(VAL_CLICK_XY, arg);
+  if AFocus then k := VAL_FOCUSCLICK_XY else k := VAL_CLICK_XY;
+  msg := CefAppMessageType(k, arg);
   arg.SetInt(IDX_CLICK_CALLBACKID, cbId);
   arg.SetInt(IDX_CLICK_X, x);
   arg.SetInt(IDX_CLICK_Y, y);
   CefSendProcessMessageCurrentContextToBrowser(msg);
 end;
+
+procedure CefRenderClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
+begin
+  FocusClickInBrowser(False, x, y, ACallback)
+end;
+
+procedure CefRenderFocusClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
+begin
+  FocusClickInBrowser(True, x, y, ACallback)
+end;
+
 
 procedure CefRenderKeyPressInBrowser(const AKey: Integer; const ACallback: ICefv8Value);
 var

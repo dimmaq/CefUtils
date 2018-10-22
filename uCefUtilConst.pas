@@ -52,7 +52,8 @@ const
 
   VAL_EXEC_CALLBACK = 13;
   VAL_CLICK_XY      = 14;
-  VAL_KEY_PRESS     = 15;
+  VAL_FOCUSCLICK_XY = 15;
+  VAL_KEY_PRESS     = 16;
 
 
   SPEED_DEF = 1000;

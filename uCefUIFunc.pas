@@ -85,7 +85,8 @@ function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
 procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint;
   const ATimeout: Integer; const AAbortEvent: TEvent); overload;
 procedure CefUIMouseClick(const AAction: TCefScriptBase); overload;
-procedure CefUIClickAndCallbackAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+procedure CefUIFocusClickAndCallbackAsync(const AFocus: Boolean;
+  const ABrowser: ICefBrowser; const AArg: ICefListValue);
 procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer;
   const AAbordEvent: TEvent; const ATimeout: Integer); overload;
 procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer); overload;
@@ -119,7 +120,7 @@ function CefUIGetElementAttrValue(const AAction: TCefScriptBase;
 
 implementation
 
-//{$DEFINE LOG_XY}
+{$DEFINE LOG_XY}
 
 uses
   {$IFDEF LOG_XY}
@@ -700,11 +701,21 @@ end;
 
 type
   TClickTask = class(TCefSendEventTaskItem)
+  private
+    FFocus: Boolean;
   protected
     procedure Execute; override;
+  public
+    function SetFocus(const AFocus: Boolean): TClickTask;
   end;
 
 { TClickTask }
+
+function TClickTask.SetFocus(const AFocus: Boolean): TClickTask;
+begin
+  FFocus := AFocus;
+  Result := Self
+end;
 
 procedure TClickTask.Execute;
 var
@@ -718,6 +729,11 @@ begin
   CefUIMouseSetToPoint(FBrowser, FOwner.AbortEvent, nil, p, CLICK_PAUSE_DEF div 10);
   if not FOwner.IsAborted then
   begin
+    if FFocus then
+    begin
+        {$IFDEF LOG_XY} MainForm.Log.Warning('*SendFocusEvent!'); {$ENDIF}
+      FBrowser.Host.SendFocusEvent(True);
+    end;
     CefUIMouseClick(FBrowser, p, CLICK_PAUSE_DEF, FOwner.AbortEvent);
     //
     if not FOwner.IsAborted then
@@ -727,9 +743,10 @@ begin
   end;
 end;
 
-procedure CefUIClickAndCallbackAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
+procedure CefUIFocusClickAndCallbackAsync(const AFocus: Boolean;
+  const ABrowser: ICefBrowser; const AArg: ICefListValue);
 begin
-  CefSendEventThreadTaskAdd(TClickTask.Create(ABrowser, AArg))
+  CefSendEventThreadTaskAdd(TClickTask.Create(ABrowser, AArg).SetFocus(AFocus))
 end;
 
 procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer;
@@ -754,6 +771,7 @@ begin
   FillMemory(@event, SizeOf(event), 0);
   event.is_system_key := 0;
   event.modifiers := 0;
+//  event.focus_on_editable_field := ord(True);
 
   VkCode := LOBYTE(VkKeyScan(Char(AkeyCode)));
   scanCode := MapVirtualKey(VkCode, MAPVK_VK_TO_VSC);

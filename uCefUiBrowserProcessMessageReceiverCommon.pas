@@ -50,8 +50,9 @@ begin
   begin
     AResult := True;
     case arg.GetInt(IDX_TYPE) of
-      VAL_CLICK_XY: CefUIClickAndCallbackAsync(ABrowser, arg);
-      VAL_KEY_PRESS: CefUIKeyPressAsync(ABrowser, arg);
+      VAL_CLICK_XY:      CefUIFocusClickAndCallbackAsync(False, ABrowser, arg);
+      VAL_FOCUSCLICK_XY: CefUIFocusClickAndCallbackAsync(True, ABrowser, arg);
+      VAL_KEY_PRESS:     CefUIKeyPressAsync(ABrowser, arg);
     end;
   end
   else
