@@ -120,7 +120,7 @@ function CefUIGetElementAttrValue(const AAction: TCefScriptBase;
 
 implementation
 
-{$DEFINE LOG_XY}
+//{$DEFINE LOG_XY}
 
 uses
   {$IFDEF LOG_XY}
@@ -132,6 +132,10 @@ uses
   uGlobalFunctions,
   //
   uCefUtilConst, uCefWaitEventList, uCefUiSendEventThread;
+
+
+const
+  CLICK_PAUSE_DEF = 70;
 
 
 function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -689,9 +693,6 @@ begin
 
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, True, 1);
 end;
-
-const
-  CLICK_PAUSE_DEF = 70;
 
 procedure CefUIMouseClick(const AAction: TCefScriptBase);
 begin

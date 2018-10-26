@@ -85,7 +85,7 @@ begin
     FailMsg2('fail mouse move to element');
     Exit(False);
   end;
-  CefUIMouseClick(Chromium.Browser, FController.Cursor);
+  CefUIMouseClick(Self);// Chromium.Browser, FController.Cursor);
   Exit(True);
 end;
 
