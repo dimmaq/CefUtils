@@ -3,7 +3,7 @@ unit uCefUIBrowserProcessMessageReceiverCommon;
 interface
 
 uses
-  System.SysUtils, System.Generics.Collections,
+  System.SysUtils, System.Generics.Collections, System.Classes,
   //
   uCEFApplication, uCefTypes, uCefInterfaces, uCefChromium,
   //
@@ -12,7 +12,6 @@ uses
 
 type
   TCefUIBrowserProcessMessageReceiverCommon = class(TCefUIBrowserProcessMessageReceiver)
-  private
   protected
     procedure Receive(Sender: TObject; const ABrowser: ICefBrowser;
       ASourceProcess: TCefProcessId; const AMessage: ICefProcessMessage;
@@ -53,6 +52,8 @@ begin
       VAL_CLICK_XY:      CefUIFocusClickAndCallbackAsync(False, ABrowser, arg);
       VAL_FOCUSCLICK_XY: CefUIFocusClickAndCallbackAsync(True, ABrowser, arg);
       VAL_KEY_PRESS:     CefUIKeyPressAsync(ABrowser, arg);
+    else
+      AResult := False;
     end;
   end
   else

@@ -39,7 +39,8 @@ function ElemByCefList(const A: ICefListValue): TElementParams;
 function CefAppMessageNew: ICefProcessMessage;
 function CefAppMessageArgs(var AArgs: ICefListValue): ICefProcessMessage;
 function CefAppMessageType(const AType: Integer; var AArgs: ICefListValue): ICefProcessMessage;
-function CefAppMessageTypeVal(const AType: Integer; const AValue: Integer): ICefProcessMessage;
+function CefAppMessageTypeVal(const AType: Integer; const AValue: Integer): ICefProcessMessage;  overload;
+function CefAppMessageTypeVal(const AType: Integer; const AValue: string): ICefProcessMessage;   overload;
 function CefAppMessageTypeElem(const AType: Integer; const AElem: TElementParams;
   var AArgs: ICefListValue): ICefProcessMessage; overload;
 function CefAppMessageTypeElem(const AType: Integer;
@@ -76,6 +77,7 @@ uses
   //
   uCEFProcessMessage, uCefUtilConst;
 
+
 function CefAppMessageNew: ICefProcessMessage;
 begin
   Result := TCefProcessMessageRef.New(MYAPP_CEF_MESSAGE_NAME);
@@ -98,6 +100,13 @@ var args: ICefListValue;
 begin
   Result := CefAppMessageType(AType, args);
   args.SetInt(IDX_VALUE, AValue);
+end;
+
+function CefAppMessageTypeVal(const AType: Integer; const AValue: string): ICefProcessMessage;
+var args: ICefListValue;
+begin
+  Result := CefAppMessageType(AType, args);
+  args.SetString(IDX_VALUE, AValue);
 end;
 
 function CefAppMessageTypeElem(const AType: Integer; const AElem: TElementParams;

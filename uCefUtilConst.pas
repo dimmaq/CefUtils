@@ -55,6 +55,8 @@ const
   VAL_FOCUSCLICK_XY = 15;
   VAL_KEY_PRESS     = 16;
 
+  VAL_NOTIFY_STR = 17;
+
 
   SPEED_DEF = 1000;
   SCROLL_WAIT = 3333;
