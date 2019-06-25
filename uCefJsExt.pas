@@ -48,16 +48,20 @@ type
     property Name: string read FName write FName;
   end;
 
+function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
+  var AValue: ICefv8Value): Boolean; overload;
+function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
+  var AValue: Integer): Boolean; overload;
+function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
+  var AValue: string): Boolean; overload;
+
 implementation
 
 uses
-  uCefUtilConst, uCefUtilFunc, uCefRenderFunc,
-  //
-  uGlobalVars, uGlobalFunctions;
-
+  uCefUtilConst, uCefUtilFunc, uCefRenderFunc;
 
 function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
-  var AValue: ICefv8Value): Boolean; overload;
+  var AValue: ICefv8Value): Boolean;
 begin
   AValue := nil;
   if Length(AArguments) < (AIndex + 1) then
@@ -67,7 +71,7 @@ begin
 end;
 
 function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
-  var AValue: Integer): Boolean; overload;
+  var AValue: Integer): Boolean;
 var v: ICefv8Value;
 begin
   if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
@@ -88,7 +92,7 @@ begin
 end;
 
 function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
-  var AValue: string): Boolean; overload;
+  var AValue: string): Boolean;
 var v: ICefv8Value;
 begin
   if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
@@ -138,13 +142,14 @@ end;
 
 procedure TCefJsExt.AfterConstruction;
 begin
+  inherited;
+
   FHandlers := TDictionary<string,TJsFunc>.Create;
   FHandlers.Add('click', Click);
   FHandlers.Add('focusClick', FocusClick);
   FHandlers.Add('keyPress', KeyPress);
   FHandlers.Add('getParam', GetParamHandler);
   FHandlers.Add('notify', Notify);
-  inherited;
 end;
 
 procedure TCefJsExt.Notify(const obj: ICefv8Value;
