@@ -144,7 +144,7 @@ begin
   Result := nil;
   if ADocument = nil then
     Exit;
-  Result := CefVisitGetElementsRoot(ADocument.Body, AElement, AFilter, ALimit)
+  Result := CefVisitGetElementsRoot(ADocument.Document, AElement, AFilter, ALimit)
 end;
 
 function CefVisitGetElement(const ADocument: ICefDomDocument;

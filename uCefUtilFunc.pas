@@ -18,7 +18,8 @@ type
     Class_: string;
     AttrName: string;
     AttrValue: string;
-    constructor Create(const ATag, AId, AName, AClass, AAttrName, AAttrValue: string);
+    Text: string;
+    constructor Create(const ATag, AId, AName, AClass, AAttrName, AAttrValue, AText: string);
     class function CreateId(const AId: string; const ATag: string = ''): TElementParams; static;
     class function CreateTagName(const ATag, AName: string): TElementParams; static;
     class function CreateTagClass(const ATag, AClass: string): TElementParams; static;
@@ -31,7 +32,7 @@ type
 
 function CefSendProcessMessageCurrentContextToBrowser(const AMsg: ICefProcessMessage): Boolean;
 
-function ElemFilt(const ATag, AId, AName, AClass, AAttrName, AAttrValue: string): TElementParams;
+function ElemFilt(const ATag, AId, AName, AClass, AAttrName, AAttrValue, AText: string): TElementParams;
 function ElemById(const AId: string; const ATag: string = ''): TElementParams;
 function ElemByAttr(const ATag, AAttrName, AAttrValue: string): TElementParams;
 function ElemByCefList(const A: ICefListValue): TElementParams;
@@ -47,6 +48,7 @@ function CefAppMessageTypeElem(const AType: Integer;
   const AElem: TElementParams): ICefProcessMessage; overload;
 function CefAppMessageTypeElem(const AType: Integer; const AElem: TElementParams;
   const AValue2: string; var AArgs: ICefListValue): ICefProcessMessage; overload;
+function CefAppMessageResultNew(const AResult: string): ICefProcessMessage; overload;
 function CefAppMessageResultNew(const AResult: Boolean): ICefProcessMessage; overload;
 function CefAppMessageResultNew(const AResult: ICefListValue): ICefProcessMessage; overload;
 function CefAppMessageTypeExecCallback(const ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;  overload;
@@ -56,7 +58,7 @@ procedure CefExecJsCallback(const ABrowser: ICefBrowser; const AId: Integer);
 
 function CefStringMapToDictValue(const A: ICefStringMap): ICefDictionaryValue;
 
-function CefListValueToJson(const A: ICefListValue; const APad: string): string;
+//function CefListValueToJson(const A: ICefListValue; const APad: string): string;
 function CefListValueToJsonStr(const A: ICefListValue): string;
 
 procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
@@ -72,6 +74,7 @@ implementation
 uses
   //
   uCEFStringMap, uCEFDictionaryValue, uCefTask, uCEFValue, uCefv8Context,
+  uCEFMiscFunctions, uCEFConstants,
   //
   uGlobalFunctions,
   //
@@ -131,6 +134,13 @@ begin
   AArgs.SetString(IDX_VALUE2, AValue2);
 end;
 
+function CefAppMessageResultNew(const AResult: string): ICefProcessMessage;
+var arg: ICefListValue;
+begin
+  Result := CefAppMessageArgs(arg);
+  arg.SetString(IDX_RESULT, AResult)
+end;
+
 function CefAppMessageResultNew(const AResult: Boolean): ICefProcessMessage;
 var arg: ICefListValue;
 begin
@@ -180,6 +190,7 @@ begin
   Result := TEncoding.ANSI.GetString(text);
 end;
 
+(*
 function CefDictValueToJson(const A: ICefDictionaryValue; const APad: string): string;
 var
   j, l: Integer;
@@ -261,20 +272,28 @@ begin
 
   Result := '['#13#10 + CefListValueToJson(A, '') + ']'#13#10
 end;
+*)
 
 
-
+function CefListValueToJsonStr(const A: ICefListValue): string;
+var val: ICefValue;
+begin
+  val := TCefValueRef.New;
+  val.SetList(A);
+  Result := CefWriteJson(val, JSON_WRITER_PRETTY_PRINT) // JSON_WRITER_PRETTY_PRINT
+end;
 { TElementParams }
 
 constructor TElementParams.Create(const ATag, AId, AName, AClass, AAttrName,
-  AAttrValue: string);
+  AAttrValue, AText: string);
 begin
   Tag := ATag;
   Id := AId;
   Name := AName;
   Class_ := AClass;
   AttrName := AAttrName;
-  AttrValue := AAttrValue
+  AttrValue := AAttrValue;
+  Text := AText
 end;
 
 class function TElementParams.CreateCefListValue(
@@ -282,28 +301,28 @@ class function TElementParams.CreateCefListValue(
 begin
   Result := TElementParams.Create(A.GetString(IDX_TAG), A.GetString(IDX_ID),
     A.GetString(IDX_NAME), A.GetString(IDX_CLASS),
-    A.GetString(IDX_ATTR), A.GetString(IDX_VALUE))
+    A.GetString(IDX_ATTR), A.GetString(IDX_VALUE), A.GetString(IDX_TEXT))
 end;
 
 class function TElementParams.CreateId(const AId, ATag: string): TElementParams;
 begin
-  Result := TElementParams.Create(ATag, AId, '', '', '', '')
+  Result := TElementParams.Create(ATag, AId, '', '', '', '', '')
 end;
 
 class function TElementParams.CreateTagAttr(const ATag, AAttrName,
   AAttrValue: string): TElementParams;
 begin
-  Result := TElementParams.Create(ATag, '', '', '', AAttrName, AAttrValue)
+  Result := TElementParams.Create(ATag, '', '', '', AAttrName, AAttrValue, '')
 end;
 
 class function TElementParams.CreateTagClass(const ATag, AClass: string): TElementParams;
 begin
-  Result := TElementParams.Create(ATag, '', '', AClass, '', '')
+  Result := TElementParams.Create(ATag, '', '', AClass, '', '', '')
 end;
 
 class function TElementParams.CreateTagName(const ATag, AName: string): TElementParams;
 begin
-  Result := TElementParams.Create(ATag, '', AName, '', '', '')
+  Result := TElementParams.Create(ATag, '', AName, '', '', '', '')
 end;
 
 function TElementParams.IsEmpty: Boolean;
@@ -319,12 +338,20 @@ end;
 
 procedure TElementParams.SaveToCefListValue(const A: ICefListValue);
 begin
-  A.SetString(IDX_TAG, Tag);
-  A.SetString(IDX_ID, Id);
-  A.SetString(IDX_NAME, Name);
-  A.SetString(IDX_CLASS, Class_);
-  A.SetString(IDX_ATTR, AttrName);
-  A.SetString(IDX_VALUE, AttrValue);
+  if Tag <> '' then
+    A.SetString(IDX_TAG, Tag);
+  if Id <> '' then
+    A.SetString(IDX_ID, Id);
+  if Name <> '' then
+    A.SetString(IDX_NAME, Name);
+  if Class_ <> '' then
+    A.SetString(IDX_CLASS, Class_);
+  if AttrName <> '' then
+    A.SetString(IDX_ATTR, AttrName);
+  if AttrValue <> '' then
+    A.SetString(IDX_VALUE, AttrValue);
+  if Text <> '' then
+    A.SetString(IDX_TEXT, Text);
 end;
 
 function ElemById(const AId, ATag: string): TElementParams;
@@ -332,14 +359,14 @@ begin
   Result := TElementParams.CreateId(AId, ATag)
 end;
 
-function ElemFilt(const ATag, AId, AName, AClass, AAttrName, AAttrValue: string): TElementParams;
+function ElemFilt(const ATag, AId, AName, AClass, AAttrName, AAttrValue, AText: string): TElementParams;
 begin
-  Result := TElementParams.Create(ATag, AId, AName, AClass, AAttrName, AAttrValue)
+  Result := TElementParams.Create(ATag, AId, AName, AClass, AAttrName, AAttrValue, AText)
 end;
 
 function ElemByAttr(const ATag, AAttrName, AAttrValue: string): TElementParams;
 begin
-  Result := TElementParams.Create(ATag, '', '', '', AAttrName, AAttrValue)
+  Result := TElementParams.Create(ATag, '', '', '', AAttrName, AAttrValue, '')
 end;
 
 function ElemByCefList(const A: ICefListValue): TElementParams;

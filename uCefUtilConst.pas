@@ -25,6 +25,7 @@ const
   IDX_TAG    = 16;
   IDX_CLASS  = 17;
   IDX_VALUE2 = 18;
+  IDX_TEXT   = 19;
 
   IDX_CLICK_CALLBACKID = 1;
   IDX_CLICK_X = 2;
@@ -56,6 +57,9 @@ const
   VAL_KEY_PRESS     = 16;
 
   VAL_NOTIFY_STR = 17;
+  VAL_OUTERHTML = 18;
+  VAL_INNERTEXT = 19;
+  VAL_ASMARKUP = 20;
 
 
   SPEED_DEF = 1000;

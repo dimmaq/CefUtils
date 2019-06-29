@@ -118,6 +118,10 @@ function CefUITypeText(const AAction: TCefScriptBase; const AText: string;
 function CefUIGetElementAttrValue(const AAction: TCefScriptBase;
   const AElement: TElementParams; const AAttrName: string): string;
 
+function CefUIGetElementOuterHtml(const AAction: TCefScriptBase; const AElement: TElementParams): string;
+function CefUIGetElementInnerText(const AAction: TCefScriptBase; const AElement: TElementParams): string;
+function CefUIGetElementAsMarkup(const AAction: TCefScriptBase; const AElement: TElementParams): string;
+
 implementation
 
 //{$DEFINE LOG_XY}
@@ -400,7 +404,7 @@ end;
 function CefUIGetElementRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr: string): TRect;
 begin
-  Result := CefUIGetElementRect(ABrowser, AAbortEvent, ElemFilt(ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr))
+  Result := CefUIGetElementRect(ABrowser, AAbortEvent, ElemFilt(ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ''))
 end;
 
 function CefUIDoScroll(const ACursor: TPoint; const AStep, ACount: Integer;
@@ -993,5 +997,38 @@ begin
   end;
   Exit('')
 end;
+
+function CefUIGetElementResultString(const AVal: Integer; const AAction: TCefScriptBase;
+  const AElement: TElementParams): string;
+var
+  msg: ICefProcessMessage;
+  arg, res: ICefListValue;
+begin
+  msg := CefAppMessageType(AVal, arg);
+  AElement.SaveToCefListValue(arg);
+  res := CefUISendRenderMessage(AAction.Chromium.Browser, AAction.AbortEvent, msg);
+  if Assigned(res) then
+  begin
+    if res.GetType(IDX_RESULT) = VTYPE_STRING then
+      Exit(res.GetString(IDX_RESULT))
+  end;
+  Result := ''
+end;
+
+function CefUIGetElementOuterHtml(const AAction: TCefScriptBase; const AElement: TElementParams): string;
+begin
+  Result := CefUIGetElementResultString(VAL_OUTERHTML, AAction, AElement);
+end;
+
+function CefUIGetElementInnerText(const AAction: TCefScriptBase; const AElement: TElementParams): string;
+begin
+  Result := CefUIGetElementResultString(VAL_INNERTEXT, AAction, AElement);
+end;
+
+function CefUIGetElementAsMarkup(const AAction: TCefScriptBase; const AElement: TElementParams): string;
+begin
+  Result := CefUIGetElementResultString(VAL_ASMARKUP, AAction, AElement)
+end;
+
 
 end.

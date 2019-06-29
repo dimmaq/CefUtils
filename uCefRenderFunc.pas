@@ -32,6 +32,13 @@ function CefRenderGetElementText(const ABrowser: ICefBrowser;
 function CefRenderSelectSetValue(const browser: ICefBrowser;
   const ASelect: TElementParams; const AValue: string): Boolean;
 
+function CefRenderGetElementOuterHtml(const ABrowser: ICefBrowser;
+  const AElement: TElementParams): string;
+function CefRenderGetElementAsMarkup(const ABrowser: ICefBrowser;
+  const AElement: TElementParams): string;
+function CefRenderGetElementInnerText(const ABrowser: ICefBrowser;
+  const AElement: TElementParams): string;
+
 procedure CefRenderFocusClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
 procedure CefRenderClickInBrowser(const x, y: Integer; const ACallback: ICefv8Value);
 procedure CefRenderKeyPressInBrowser(const AKey: Integer; const ACallback: ICefv8Value);
@@ -112,6 +119,56 @@ begin
           res.SetDictionary(j, item);
           Inc(j)
         end;
+      end;
+    end);
+  Result := res;
+end;
+
+function CefRenderGetElementOuterHtml(const ABrowser: ICefBrowser;
+  const AElement: TElementParams): string;
+begin
+  Result := CefRenderGetElementAsMarkup(ABrowser, AElement)
+end;
+
+function CefRenderGetElementAsMarkup(const ABrowser: ICefBrowser;
+  const AElement: TElementParams): string;
+var
+  res: string;
+  el: TElementParams;
+begin
+  res := '';
+  el := AElement;
+  ABrowser.MainFrame.VisitDomProc(
+    procedure(const ADocument: ICefDomDocument)
+    var
+      node: ICefDomNode;
+    begin
+      node := CefVisitGetElement(ADocument, el, nil);
+      if Assigned(node) then
+      begin
+        res := node.AsMarkup;
+      end;
+    end);
+  Result := res;
+end;
+
+function CefRenderGetElementInnerText(const ABrowser: ICefBrowser;
+  const AElement: TElementParams): string;
+var
+  res: string;
+  el: TElementParams;
+begin
+  res := '';
+  el := AElement;
+  ABrowser.MainFrame.VisitDomProc(
+    procedure(const ADocument: ICefDomDocument)
+    var
+      node: ICefDomNode;
+    begin
+      node := CefVisitGetElement(ADocument, el, nil);
+      if Assigned(node) then
+      begin
+        res := node.ElementInnerText;
       end;
     end);
   Result := res;
@@ -307,22 +364,8 @@ end;
 
 function CefRenderGetElementText(const ABrowser: ICefBrowser;
   AElement: TElementParams): string;
-var res: string;
 begin
-  res := '';
-  ABrowser.MainFrame.VisitDomProc(
-    procedure(const ADocument: ICefDomDocument)
-    var node: ICefDomNode;
-    begin
-      node := CefVisitGetElement(ADocument, AElement);
-      if Assigned(node) then
-      begin
-        res := node.GetElementInnerText()
-      end;
-    end
-  );
-
-  Result := res
+  Result := CefRenderGetElementInnerText(ABrowser, AElement)
 end;
 
 

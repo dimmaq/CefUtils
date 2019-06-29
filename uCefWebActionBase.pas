@@ -135,7 +135,7 @@ begin
 
   if Assigned(ALogger) then
   begin
-    FLog := TReLog3.Create(ALogger, '~' + AName);
+    FLog := TReLog3.Create('~' + AName, ALogger, '');
     FLogger := FLog;
   end;
 

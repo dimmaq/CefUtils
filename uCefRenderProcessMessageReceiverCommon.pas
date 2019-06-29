@@ -106,19 +106,6 @@ begin
   Result := msg;
 end;
 
-function GetElementText(const ABrowser: ICefBrowser;
-    const AArgs: ICefListValue): ICefProcessMessage;
-var
-  z: string;
-  msg: ICefProcessMessage;
-  arg: ICefListValue;
-begin
-  z := CefRenderGetElementText(ABrowser, TElementParams.CreateCefListValue(AArgs));
-  msg := CefAppMessageArgs(arg);
-  arg.SetString(IDX_RESULT, z);
-  Result := msg;
-end;
-
 function TestElementExists(const ABrowser: ICefBrowser;
     const AArgs: ICefListValue): ICefProcessMessage;
 var
@@ -151,6 +138,24 @@ function GetElementsAttr(const ABrowser: ICefBrowser;
   const AArgs: ICefListValue): ICefProcessMessage;
 begin
   Result := CefAppMessageResultNew(CefRenderGetElementsAttr(ABrowser, ElemByCefList(AArgs)))
+end;
+
+function GetElementOuterHtml(const ABrowser: ICefBrowser;
+  const AArgs: ICefListValue): ICefProcessMessage;
+begin
+  Result := CefAppMessageResultNew(CefRenderGetElementOuterHtml(ABrowser, ElemByCefList(AArgs)))
+end;
+
+function GetElementInnerText(const ABrowser: ICefBrowser;
+  const AArgs: ICefListValue): ICefProcessMessage;
+begin
+  Result := CefAppMessageResultNew(CefRenderGetElementInnerText(ABrowser, ElemByCefList(AArgs)))
+end;
+
+function GetElementAsMarkup(const ABrowser: ICefBrowser;
+  const AArgs: ICefListValue): ICefProcessMessage;
+begin
+  Result := CefAppMessageResultNew(CefRenderGetElementAsMarkup(ABrowser, ElemByCefList(AArgs)))
 end;
 
 procedure RenderExecCallback(const ABrowser: ICefBrowser;
@@ -194,10 +199,13 @@ begin
     VAL_GET_ELEMENT_RECT:    msg := GetElementRect(ABrowser, arg);
     VAL_TEST_ELEMENT_EXISTS: msg := TestElementExists(ABrowser, arg);
     VAL_GET_BIDY_RECT:       msg := GetBodyRect(ABrowser);
-    VAL_GET_ELEMENT_TEXT:    msg := GetElementText(ABrowser, arg);
+    VAL_GET_ELEMENT_TEXT:    msg := GetElementInnerText(ABrowser, arg);
     VAL_SET_ELEMENT_VALUE:   msg := SetElementValue(ABrowser, arg);
     VAL_SET_SELECT_VALUE:    msg := SetSelectValue(ABrowser, arg);
     VAL_GET_ELEMENTS_ATTR:   msg := GetElementsAttr(ABrowser, arg);
+    VAL_OUTERHTML          : msg := GetElementOuterHtml(ABrowser, arg);
+    VAL_INNERTEXT          : msg := GetElementInnerText(ABrowser, arg);
+    VAL_ASMARKUP           : msg := GetElementAsMarkup(ABrowser, arg);
     VAL_EXEC_CALLBACK:       RenderExecCallback(ABrowser, arg);
     {...}
     else
