@@ -73,6 +73,23 @@ var
     attrval := LowerCase(Trim((AElem.GetElementAttribute(AElement.AttrName))));
     Result := YesRegExpr(attrval, AElement.AttrValue)
   end;
+  function TestText(const AElem: ICefDomNode): Boolean;
+  var val: string;
+  begin
+    if AElement.Text.IsEmpty then
+      Exit(True);
+    if not AElem.HasChildren then
+      Exit(False);
+    if AElem.FirstChild = nil then
+      Exit(False);
+    if not AElem.FirstChild.IsSame(AElem.LastChild) then // there is one child
+      Exit(False);
+    if not AElem.FirstChild.IsText then
+      Exit(False);
+    val := AElem.FirstChild.AsMarkup;
+    Result := YesRegExpr(val, AElement.Text);
+  end;
+
   function TestFilter(const AElem: ICefDomNode): Boolean;
   begin
     if Assigned(AElem) then
@@ -82,7 +99,8 @@ var
             if TestClass(AElem) then
               if not Assigned(AFilter) or AFilter(AElem) then
                 if TestAttr(aElem) then
-                  Exit(True);
+                  if TestText(aElem) then
+                    Exit(True);
     Exit(False);
   end;
   function ProcessNode(const ANode: ICefDomNode; const AList: TList<ICefDomNode>; const ALevel: Integer): Boolean;

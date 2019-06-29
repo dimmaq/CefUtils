@@ -21,6 +21,7 @@ type
     Text: string;
     constructor Create(const ATag, AId, AName, AClass, AAttrName, AAttrValue, AText: string);
     class function CreateId(const AId: string; const ATag: string = ''): TElementParams; static;
+    class function CreateTagText(const ATag, ATextRegExp: string): TElementParams; static;
     class function CreateTagName(const ATag, AName: string): TElementParams; static;
     class function CreateTagClass(const ATag, AClass: string): TElementParams; static;
     class function CreateTagAttr(const ATag, AAttrName, AAttrValue: string): TElementParams; static;
@@ -323,6 +324,12 @@ end;
 class function TElementParams.CreateTagName(const ATag, AName: string): TElementParams;
 begin
   Result := TElementParams.Create(ATag, '', AName, '', '', '', '')
+end;
+
+class function TElementParams.CreateTagText(const ATag,
+  ATextRegExp: string): TElementParams;
+begin
+  Result := TElementParams.Create(ATag, '', '', '', '', '', ATextRegExp)
 end;
 
 function TElementParams.IsEmpty: Boolean;
