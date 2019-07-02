@@ -12,7 +12,7 @@ uses
   uCefWebActionBase, uCefWebAction, uCefUtilType;
 
 const
-  PAUSE_DEF = '3333-7777';
+  PAUSE_DEF = '1111-3333';
   PAUSE_STEP_DEF = 3000;
 
   CHARS_SPACE = [#32, #9];

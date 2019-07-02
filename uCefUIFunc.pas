@@ -7,7 +7,7 @@ uses
   //
   uCEFInterfaces, uCEFTypes, uCEFMiscFunctions, uCEFConstants, uCEFChromium,
   //
-  uCefScriptBase, uCefWebActionBase, uCefUtilFunc;
+  uCefScriptBase, uCefWebActionBase, uCefUtilFunc, uCefUtilType;
 
 const
   DIR_UP = 1;
@@ -55,13 +55,13 @@ function CefUIScrollToElement(const ABrowser: ICefBrowser; const AAbortEvent: TE
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string;
   const ATry: Integer): Boolean; overload;
 function CefUIScrollToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  const ASpeed: Integer;
+  const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
 function CefUIScrollToElement(const AAction: TCefScriptBase;
-  const ASpeed: Integer;
+  const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
 function CefUIScrollToElement(const AAction: TCefScriptBase;
-  const ASpeed: Integer; const AElement: TElementParams): Boolean; overload;
+  const ASpeed: TCefUISpeed; const AElement: TElementParams): Boolean; overload;
 function CefUIScrollToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean; overload;
 
@@ -74,11 +74,11 @@ function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent:
   var APoint: TPoint; const ATimeout, AStep: Integer;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  var APoint: TPoint; const ASpeed: Integer;
+  var APoint: TPoint; const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
-function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
-function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
   const AElement: TElementParams): Boolean; overload;
 function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean; overload;
@@ -97,8 +97,8 @@ function CefUIDoScroll(const ACursor: TPoint; const AStep, ACount: Integer;
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const ACursor: TPoint; const ATimeout, AStep, ADir, ATry: Integer): Boolean; overload;
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  const ACursor: TPoint; const ASpeed, ADir: Integer): Boolean; overload;
-function CefUIScroll(const AAction: TCefScriptBase; const ASpeed, ADir: Integer): Boolean; overload;
+  const ACursor: TPoint; const ASpeed: TCefUISpeed; const ADir: Integer): Boolean; overload;
+function CefUIScroll(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed; const ADir: Integer): Boolean; overload;
 function CefUIGetElementText(const ABrowser: ICefBrowser;
   const AAbortEvent: TEvent; const AElement: TElementParams): string; overload;
 function CefUIGetElementText(const AAction: TCefScriptBase;
@@ -140,7 +140,6 @@ uses
 
 const
   CLICK_PAUSE_DEF = 70;
-
 
 function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const A: ICefProcessMessage): ICefListValue;
@@ -487,17 +486,17 @@ begin
 end;
 
 function CefUIScrollToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  const ASpeed: Integer;
+  const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 var time: Integer;
 begin
-  time := Round(Power(ASpeed / 50000, -1));
+  time := SpeedToPause(ASpeed);
   Result := CefUIScrollToElement(ABrowser, AAbortEvent, time, SCROLL_STEP_DEF,
       ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr, 0)
 end;
 
 function CefUIScrollToElement(const AAction: TCefScriptBase;
-  const ASpeed: Integer;
+  const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 begin
   Result := CefUIScrollToElement(AAction.Chromium.Browser, AAction.AbortEvent,
@@ -505,7 +504,7 @@ begin
 end;
 
 function CefUIScrollToElement(const AAction: TCefScriptBase;
-  const ASpeed: Integer; const AElement: TElementParams): Boolean;
+  const ASpeed: TCefUISpeed; const AElement: TElementParams): Boolean;
 begin
   Result := (not AElement.IsEmpty) and CefUIScrollToElement(AAction, ASpeed, AElement.Tag, AElement.Id,
       AElement.Name, AElement.Class_, AElement.AttrName, AElement.AttrValue, AElement.Text)
@@ -542,7 +541,7 @@ begin
 
   ABrowser.Host.SendMouseMoveEvent(@mouseEvent, False);
 
-  // CefUIMouseSetPointVisual(ABrowser, AToPoint);
+  CefUIMouseSetPointVisual(ABrowser, AToPoint);
 
   if ATimeout > 0 then
   begin
@@ -646,25 +645,23 @@ begin
 end;
 
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  var APoint: TPoint; const ASpeed: Integer;
+  var APoint: TPoint; const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 var pause: Integer;
 begin
-  pause := Round(Power(ASpeed / 20000, -1));
-  Result :=
-  //CefUIMouseMoveToElement
-  CefUIMouseSetToElement(ABrowser, AAbortEvent, APoint, pause, 2,
+  pause := SpeedToPause(ASpeed);
+  Result := CefUIMouseSetToElement(ABrowser, AAbortEvent, APoint, pause, 2,
     ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr)
 end;
 
-function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 begin
   Result := CefUIMouseMoveToElement(AAction.Chromium.Browser, AAction.AbortEvent,
     AAction.Controller.Cursor, ASpeed, ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr)
 end;
 
-function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: Integer;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
   const AElement: TElementParams): Boolean;
 begin
   Result := CefUIMouseMoveToElement(AAction, ASpeed, AElement.Tag, AElement.Id,
@@ -883,13 +880,13 @@ begin
 end;
 
 function CefUIScroll(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  const ACursor: TPoint; const ASpeed, ADir: Integer): Boolean;
+  const ACursor: TPoint; const ASpeed: TCefUISpeed; const ADir: Integer): Boolean;
 begin
   Result := CefUIScroll(ABrowser, AAbortEvent, ACursor,
-    Round(Power(ASpeed / 50000, -1)), SCROLL_STEP_DEF, ADir, 0)
+    SpeedToPause(ASpeed), SCROLL_STEP_DEF, ADir, 0)
 end;
 
-function CefUIScroll(const AAction: TCefScriptBase; const ASpeed, ADir: Integer): Boolean;
+function CefUIScroll(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed; const ADir: Integer): Boolean;
 begin
   Result := CefUIScroll(AAction.Chromium.Browser, AAction.AbortEvent,
     AAction.Controller.Cursor, ASpeed, ADir)
@@ -959,6 +956,7 @@ function CefUITypeText(const AAction: TCefScriptBase; const AText: string;
 var
   br: TChromium;
   ch: Char;
+  slp: Integer;
 begin
   br := AAction.Chromium;
   br.SendFocusEvent(True);
@@ -967,10 +965,11 @@ begin
     if CefUIMouseMoveToElement(AAction, AElement) then
     begin
       CefUIMouseClick(AAction);
+      slp := AAction.Controller.Pause;
       for ch in AText do
       begin
         CefSendKeyEvent(br, Ord(ch));
-        if SleepEvents(AAction.AbortEvent, nil, 500) <> wrTimeout then
+        if SleepEvents(AAction.AbortEvent, nil, slp) <> wrTimeout then
           Exit(False)
       end;
       Exit(True)

@@ -5,7 +5,7 @@ interface
 uses
   //
   //
-  uCefScriptBase, uCefScriptNavBase, uCefWebAction;
+  uCefScriptBase, uCefScriptNavBase, uCefWebAction, uCefUtilType;
 
 type
   TScriptClickElement = class(TCefScriptNavBase)
@@ -21,11 +21,11 @@ type
   protected
     function DoNavEvent(const AWebAction: TCefWebAction): Boolean; override;
   public
-    constructor Create(const ASpeed: Integer; const ATag, AId, AName,
+    constructor Create(const ASpeed: TCefUISpeed; const ATag, AId, AName,
         AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string;
         const ASetAsNav: Boolean;
         const AParent: TCefScriptBase); overload;
-    constructor Create(const ASpeed: Integer; const AId: string;
+    constructor Create(const ASpeed: TCefUISpeed; const AId: string;
         const ASetAsNav: Boolean;
         const AParent: TCefScriptBase); overload;
     constructor Create(const AId: string; const ASetAsNav: Boolean;
@@ -42,7 +42,7 @@ uses
 
 { TScriptClickElement }
 
-constructor TScriptClickElement.Create(const ASpeed: Integer; const ATag, AId, AName,
+constructor TScriptClickElement.Create(const ASpeed: TCefUISpeed; const ATag, AId, AName,
     AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string; const ASetAsNav: Boolean;
     const AParent: TCefScriptBase);
 begin
@@ -60,7 +60,7 @@ begin
     FSpeed := SPEED_DEF
 end;
 
-constructor TScriptClickElement.Create(const ASpeed: Integer; const AId: string;
+constructor TScriptClickElement.Create(const ASpeed: TCefUISpeed; const AId: string;
   const ASetAsNav: Boolean; const AParent: TCefScriptBase);
 begin
   Create(ASpeed, '', AId, '', '', '', '', '', ASetAsNav, AParent)

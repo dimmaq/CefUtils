@@ -9,7 +9,7 @@ uses
   uCEFTypes, uCEFInterfaces, uCEFProcessMessage, uCEFDownloadImageCallBack,
   //
   uCefWebAction, uCefScriptBase, uCefWebActionBase, uCefScriptNav, uCefUtilFunc,
-  uCefScriptDict;
+  uCefUtilType, uCefScriptDict;
 
 
 type
@@ -41,7 +41,7 @@ type
     //---
     function RunScriptClickById(const AId: string;
         const ASetFail: Boolean = True; const ASetIsNav: Boolean = False): Boolean;
-    function RunScriptScrollAndClickElement(const ASpeed: Integer;
+    function RunScriptScrollAndClickElement(const ASpeed: TCefUISpeed;
       const AElem: TElementParams; const ASetFail: Boolean;
       const ASetIsNav: Boolean): Boolean; overload;
     function RunScriptScrollAndClickElement(const AElem: TElementParams;
@@ -216,14 +216,14 @@ function TCefScriptActionBase.RunScriptClickById(const AId: string;
 begin
   RunActionStopFree();
   try
-    FAction := TScriptClickElement.Create(5000, AId, ASetIsNav, Self);
+    FAction := TScriptClickElement.Create(FController.Pause, AId, ASetIsNav, Self);
     RunActionStartWait(Result, ASetFail);
   finally
     FreeAndNil(FAction);
   end;
 end;
 
-function TCefScriptActionBase.RunScriptScrollAndClickElement(const ASpeed: Integer;
+function TCefScriptActionBase.RunScriptScrollAndClickElement(const ASpeed: TCefUISpeed;
   const AElem: TElementParams; const ASetFail, ASetIsNav: Boolean): Boolean;
 var bol: Boolean;
 begin
