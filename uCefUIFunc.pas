@@ -133,6 +133,8 @@ uses
   //
   Winapi.Windows, System.Math, Vcl.Forms,
   //
+  uCEFApplication,
+  //
   uGlobalFunctions,
   //
   uCefUtilConst, uCefWaitEventList, uCefUiSendEventThread;
@@ -378,6 +380,24 @@ begin
     Result := TRect.Empty
 end;
 
+function RectToDevice(const A: TRect): TRect;
+var
+  f: Double;
+begin
+  f := GlobalCEFApp.DeviceScaleFactor;
+  if f <> 1 then
+  begin
+    Result.Left   := LogicalToDevice(A.Left, f);
+    Result.Top    := LogicalToDevice(A.Top, f);
+    Result.Right  := LogicalToDevice(A.Right, f);
+    Result.Bottom := LogicalToDevice(A.Bottom, f);
+  end
+  else
+  begin
+    Result := A;
+  end;
+end;
+
 function CefUIGetElementRect(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const AElem: TElementParams): TRect;
 var
@@ -389,6 +409,7 @@ begin
   res := CefUISendRenderMessage(ABrowser, AAbortEvent, msg);
   if Assigned(res) then
   begin
+   // Result := RectToDevice(ArgsToRect(res));
     Result := ArgsToRect(res);
   end
   else
@@ -526,6 +547,7 @@ function CefUIMouseSetToPoint(const ABrowser: ICefBrowser; const AAbortEvent: TE
   const AMousePos: PPoint; const AToPoint: TPoint; const ATimeout: Integer): Boolean;
 var
   mouseEvent: TCefMouseEvent;
+  lpoint: TPoint;
 begin
   if Assigned(AMousePos) then
   begin
@@ -533,15 +555,17 @@ begin
     AMousePos^.Y := AToPoint.y;
   end;
 
-  mouseEvent.x := AToPoint.X;
-  mouseEvent.y := AToPoint.Y;
+  lpoint := AToPoint;
+  DeviceToLogical(lpoint, GlobalCEFApp.DeviceScaleFactor);
+  mouseEvent.x := lpoint.X;
+  mouseEvent.y := lpoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
 
-   {$IFDEF LOG_XY}MainForm.Log.Warning('*set point: ' + AToPoint.x.ToString + ':' + AToPoint.y.ToString);{$ENDIF}
+   {$IFDEF LOG_XY}MainForm.Log.Warning('*set point: ' + lpoint.x.ToString + ':' + lpoint.y.ToString);{$ENDIF}
 
   ABrowser.Host.SendMouseMoveEvent(@mouseEvent, False);
 
-  CefUIMouseSetPointVisual(ABrowser, AToPoint);
+  CefUIMouseSetPointVisual(ABrowser, lpoint);
 
   if ATimeout > 0 then
   begin
@@ -677,13 +701,17 @@ end;
 
 procedure CefUIMouseClick(const ABrowser: ICefBrowser; const APoint: TPoint;
   const ATimeout: Integer; const AAbortEvent: TEvent);
-var mouseEvent: TCefMouseEvent;
+var
+  mouseEvent: TCefMouseEvent;
+  lpoint: TPoint;
 begin
-  mouseEvent.x := APoint.X;
-  mouseEvent.y := APoint.Y;
+  lpoint := APoint;
+  DeviceToLogical(lpoint, GlobalCEFApp.DeviceScaleFactor);
+  mouseEvent.x := lpoint.X;
+  mouseEvent.y := lpoint.Y;
   mouseEvent.modifiers := EVENTFLAG_NONE;
 
-  {$IFDEF LOG_XY} MainForm.Log.Warning('*mouse_down: ' + APoint.x.ToString + ':' + APoint.y.ToString); {$ENDIF}
+  {$IFDEF LOG_XY} MainForm.Log.Warning('*mouse_down: ' + lpoint.x.ToString + ':' + lpoint.y.ToString); {$ENDIF}
 
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, False, 1);
   if ATimeout > 0 then
@@ -691,7 +719,7 @@ begin
     SleepEvents(AAbortEvent, nil, ATimeout);
   end;
 
-   {$IFDEF LOG_XY} MainForm.Log.Warning('*mouse_up: ' + APoint.x.ToString + ':' + APoint.y.ToString); {$ENDIF}
+   {$IFDEF LOG_XY} MainForm.Log.Warning('*mouse_up: ' + lpoint.x.ToString + ':' + lpoint.y.ToString); {$ENDIF}
 
   ABrowser.Host.SendMouseClickEvent(@mouseEvent, MBT_LEFT, True, 1);
 end;
