@@ -30,8 +30,7 @@ type
   private
     FHandlers: TObjectList<TCefRenderProcessMessageReceiver>;
     //---
-    procedure Receive(const ABrowser: ICefBrowser; ASourceProcess: TCefProcessId;
-        const AMessage: ICefProcessMessage; var AHandled : boolean);
+    procedure Receive(const ABrowser: ICefBrowser; const AFrame: ICefFrame; ASourceProcess: TCefProcessId; const AMessage: ICefProcessMessage; var AHandled : boolean);
   public
     constructor Create;
     destructor Destroy; override;
@@ -85,9 +84,7 @@ begin
   end;
 end;
 
-procedure TCefRenderProcessMessageReceiverOwner.Receive(const ABrowser: ICefBrowser;
-  ASourceProcess: TCefProcessId; const AMessage: ICefProcessMessage;
-  var AHandled: boolean);
+procedure TCefRenderProcessMessageReceiverOwner.Receive(const ABrowser: ICefBrowser; const AFrame: ICefFrame; ASourceProcess: TCefProcessId; const AMessage: ICefProcessMessage; var AHandled : boolean);
 var H: TCefRenderProcessMessageReceiver;
 begin
   for H in FHandlers do

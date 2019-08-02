@@ -188,7 +188,7 @@ begin
   tick := GetTickCount();
   arg := AMessage.ArgumentList;
   eventId := arg.GetInt(IDX_EVENT);
-  CefLog('uAppCefRenderMessage', 145, 1, Format('render msgRecv eid:%d %s', [eventId, CefListValueToJsonStr(arg)]));
+  CefLog('uAppCefRenderMessage', 145, 1, Format('render msgRecv bid:%d eid:%d %s', [ABrowser.Identifier, eventId, CefListValueToJsonStr(arg)]));
   msg := nil;
   case arg.GetInt(IDX_TYPE) of
     VAL_TEST_ID_EXISTS:      msg := TestIdExists(ABrowser, arg.GetString(IDX_ID));
@@ -218,8 +218,8 @@ begin
     arg := msg.ArgumentList;
     arg.SetInt(IDX_EVENT, eventId);
     tick := G_TickCountSince(tick);
-    CefLog('uAppCefRenderMessage', 167, 1, Format('render send time:%d eid:%d %s', [tick, eventId, CefListValueToJsonStr(arg)]));
-    ABrowser.SendProcessMessage(ASourceProcess, msg);
+    CefLog('uAppCefRenderMessage', 167, 1, Format('render send bid:%d time:%d eid:%d %s', [ABrowser.Identifier, tick, eventId, CefListValueToJsonStr(arg)]));
+    ABrowser.MainFrame.SendProcessMessage(ASourceProcess, msg);
   end;
 end;
 

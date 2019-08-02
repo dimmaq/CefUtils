@@ -60,7 +60,7 @@ begin
   begin
     z := 'msgRecv:' + AMessage.Name + ' ';
     eventId := arg.GetInt(IDX_EVENT);
-    z := z + 'eid:' + IntToStr(eventId) + ' ';
+    z := z + 'bid:' + ABrowser.Identifier.ToString + ' eid:' + IntToStr(eventId) + ' ';
     event := CefWaitEventGet(eventId);
     if Assigned(event) then
     begin

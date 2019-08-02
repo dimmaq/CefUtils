@@ -52,7 +52,7 @@ function CefAppMessageTypeElem(const AType: Integer; const AElem: TElementParams
 function CefAppMessageResultNew(const AResult: string): ICefProcessMessage; overload;
 function CefAppMessageResultNew(const AResult: Boolean): ICefProcessMessage; overload;
 function CefAppMessageResultNew(const AResult: ICefListValue): ICefProcessMessage; overload;
-function CefAppMessageTypeExecCallback(const ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage;  overload;
+function CefAppMessageTypeExecCallback(const ACallbackId: Integer; var AArgs: ICefListValue): ICefProcessMessage; overload;
 function CefAppMessageTypeExecCallback(const ACallbackId: Integer): ICefProcessMessage;  overload;
 
 procedure CefExecJsCallback(const ABrowser: ICefBrowser; const AId: Integer);
@@ -62,12 +62,9 @@ function CefStringMapToDictValue(const A: ICefStringMap): ICefDictionaryValue;
 //function CefListValueToJson(const A: ICefListValue; const APad: string): string;
 function CefListValueToJsonStr(const A: ICefListValue): string;
 
-procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
-  const AName: string; const AValue: ICefValue); overload;
-procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
-  const AName, AValue: string); overload;
-procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
-  const AName: string; const AValue: Boolean); overload;
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName: string; const AValue: ICefValue); overload;
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName, AValue: string); overload;
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName: string; const AValue: Boolean); overload;
 procedure ContextWebRtcDisable(const AContext: ICefRequestContext);
 
 implementation
@@ -381,40 +378,6 @@ begin
   Result := TElementParams.CreateCefListValue(A)
 end;
 
-
-procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
-  const AName: string; const AValue: ICefValue);
-begin
-  TCefFastTask.New(TID_UI,
-    procedure
-    var
-      //res: Boolean;
-      err: ustring;
-    begin
-      {res := }AContext.SetPreference(AName, AValue, err);
-     // if not res then
-      //  gApp.Log.Error('fail context.SetPreference %s "%s"', [AName, err]);
-    end);
-end;
-
-procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
-  const AName, AValue: string);
-var cefval: ICefValue;
-begin
-  cefval := TCefValueRef.New;
-  cefval.SetString(AValue);
-  ContextSetPreferenceIfCan(AContext, AName, cefval)
-end;
-
-procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext;
-  const AName: string; const AValue: Boolean);
-var cefval: ICefValue;
-begin
-  cefval := TCefValueRef.New;
-  cefval.SetBool(Ord(AValue));
-  ContextSetPreferenceIfCan(AContext, AName, cefval)
-end;
-
 procedure ContextWebRtcDisable(const AContext: ICefRequestContext);
 begin
   //ContextSetPreferenceIfCan(AContext, 'disable-webrtc', True);
@@ -437,7 +400,8 @@ end;
 function CefSendProcessMessageBrowser(const ABrowser: ICefBrowser;
   const ATarget: TCefProcessId; const AMsg: ICefProcessMessage): Boolean;
 begin
-  Result := ABrowser.SendProcessMessage(ATarget, AMsg);
+  ABrowser.MainFrame.SendProcessMessage(ATarget, AMsg);
+  Result := True;
 end;
 
 function CefSendProcessMessageBrowserToRender(const ABrowser: ICefBrowser;
@@ -469,6 +433,36 @@ begin
     Exit;
   msg := CefAppMessageTypeExecCallback(AId);
   CefSendProcessMessageBrowserToRender(ABrowser, msg)
+end;
+
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName, AValue: string);
+var cefval: ICefValue;
+begin
+  cefval := TCefValueRef.New;
+  cefval.SetString(AValue);
+  ContextSetPreferenceIfCan(AContext, AName, cefval)
+end;
+
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName: string; const AValue: ICefValue);
+begin
+  TCefFastTask.New(TID_UI, procedure
+    var
+      //res: Boolean;
+      err: ustring;
+    begin
+      {res := }AContext.SetPreference(AName, AValue, err);
+     // if not res then
+      //  gApp.Log.Error('fail context.SetPreference %s "%s"', [AName, err]);
+    end
+  );
+end;
+
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName: string; const AValue: Boolean);
+var cefval: ICefValue;
+begin
+  cefval := TCefValueRef.New;
+  cefval.SetBool(Ord(AValue));
+  ContextSetPreferenceIfCan(AContext, AName, cefval)
 end;
 
 end.

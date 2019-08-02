@@ -156,8 +156,8 @@ begin
   try
     args := A.ArgumentList;
     args.SetInt(IDX_EVENT, event.ID);
-    CefLog('uifunc', 111, 1, Format('msgSend to render thrd:%d eid:%d tick:%d args:%s', [GetCurrentThreadId, event.ID, event.Tick, CefListValueToJsonStr(args)]));
-    ABrowser.SendProcessMessage(PID_RENDERER, A);
+    CefLog('uifunc', 111, 1, Format('msgSend to render bid:%d thrd:%d eid:%d tick:%d args:%s', [ABrowser.Identifier, GetCurrentThreadId, event.ID, event.Tick, CefListValueToJsonStr(args)]));
+    ABrowser.MainFrame.SendProcessMessage(PID_RENDERER, A);
     fired := nil;
     res := SleepEvents(event.Event, AAbortEvent, CEF_EVENT_WAIT_TIMEOUT, fired);
     firedS := '?';
@@ -166,7 +166,7 @@ begin
     else
     if fired = event.Event then
       firedS := 'waitEvent';
-    CefLog('uifunc', 121, 1, Format('event %s %s thrd:%d eid:%d time:%d args:%s', [WaitResultStr[res], firedS, GetCurrentThreadId, event.ID, event.TickDif, CefListValueToJsonStr(event.Res)]));
+    CefLog('uifunc', 121, 1, Format('event %s %s bid:%d thrd:%d eid:%d time:%d args:%s', [WaitResultStr[res], firedS, ABrowser.Identifier, GetCurrentThreadId, event.ID, event.TickDif, CefListValueToJsonStr(event.Res)]));
     if res = wrSignaled then
     begin
       if fired = event.Event then
@@ -185,7 +185,7 @@ begin
     end
     else
     begin
-      raise ECefRenderError.CreateFmt('render wait error %s %s time:%d', [WaitResultStr[res], firedS, event.TickDif])
+      raise ECefRenderError.CreateFmt('render wait error %s %s bid:%d time:%d', [WaitResultStr[res], firedS, ABrowser.Identifier, event.TickDif])
     end;
   finally
     CefWaitEventDelete(event)

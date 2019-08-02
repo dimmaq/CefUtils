@@ -31,7 +31,7 @@ type
   private
     FHandlers: TObjectList<TCefUIBrowserProcessMessageReceiver>;
     //---
-    procedure Receive(Sender: TObject; const ABrowser: ICefBrowser;
+    procedure Receive(ASender: TObject; const ABrowser: ICefBrowser; const AFrame: ICefFrame;
       ASourceProcess: TCefProcessId; const AMessage: ICefProcessMessage; out AResult: Boolean);
   public
     constructor Create;
@@ -81,16 +81,16 @@ begin
   A.OnProcessMessageReceived := Self.Receive
 end;
 
-procedure TCefUIBrowserProcessMessageReceiverOwner.Receive(Sender: TObject;
-    const ABrowser: ICefBrowser; ASourceProcess: TCefProcessId;
-    const AMessage: ICefProcessMessage; out AResult: Boolean);
+procedure TCefUIBrowserProcessMessageReceiverOwner.Receive(ASender: TObject; const ABrowser: ICefBrowser;
+  const AFrame: ICefFrame; ASourceProcess: TCefProcessId; const AMessage: ICefProcessMessage;
+  out AResult: Boolean);
 var H: TCefUIBrowserProcessMessageReceiver;
 begin
   for H in FHandlers do
   begin
     if H.FName = AMessage.Name then
     begin
-      H.Receive(Sender, ABrowser, ASourceProcess, AMessage, AResult);
+      H.Receive(ASender, ABrowser, ASourceProcess, AMessage, AResult);
       if AResult then
         Exit()
     end;

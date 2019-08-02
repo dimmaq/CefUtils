@@ -16,6 +16,7 @@ type
     function GetIsSucccess: Boolean;
     function GetLocationURL: string;
   protected
+    FDestroying: Boolean;
     FLog: TReLog3;
     FLogger: ILoggerInterface;
     FAbortEvent: TEvent;
@@ -36,6 +37,7 @@ type
     constructor Create(const AName: string; const ALogger: ILoggerInterface;
         const AWeb: TChromium; const ATimeout: Integer; const AAbortEvent: TEvent);
     destructor Destroy; override;
+    procedure BeforeDestruction; override;
 
     function Start: Boolean; virtual;
     function Sleep(const A: Integer; const AWaitObj: TEvent = nil;
@@ -63,7 +65,7 @@ type
     {$HINTS ON}
 
     property IsAborted: Boolean read FAborted;
-    property IsFail: Boolean read FFail;
+    property IsFail: Boolean read FFail write FFail;
     property IsSuccess: Boolean read GetIsSucccess;
     property LocationURL: string read GetLocationURL;
 
@@ -152,6 +154,8 @@ end;
 
 destructor TCefWebActionBase.Destroy;
 begin
+  FLog := nil;
+  FLogger := nil;
   FChromium := nil;
   if FEventObjOwn then
     FAbortEvent.Free;
@@ -260,6 +264,12 @@ procedure TCefWebActionBase.AbortMsg(const AErrorMessageFormat: string;
   const AArgs: array of const);
 begin
   AbortMsg(Format(AErrorMessageFormat, AArgs))
+end;
+
+procedure TCefWebActionBase.BeforeDestruction;
+begin
+  inherited;
+  FDestroying := True;
 end;
 
 procedure TCefWebActionBase.FailMsg(const AErrorMessage: string);

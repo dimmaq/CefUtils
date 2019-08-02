@@ -18,6 +18,7 @@ type
 
   TCefWebAction = class(TCefWebActionBase)
   private
+    FIsSetEvents: Boolean;
     FLoadEvent: TEvent;
     FIsNavigation: Boolean;
     FOnAction: TCefWebActionEvent;
@@ -129,51 +130,56 @@ procedure TCefWebAction.Clear;
 var B: TChromium;
 begin
   B := Chromium;
-  if B = nil then
-    Exit;
-
-  B.OnLoadStart := FSaveOnLoadStart;
-  B.OnLoadEnd   := FSaveOnLoadEnd;
-  B.OnLoadError := FSaveOnLoadError;
+  if Assigned(B) and FIsSetEvents then
+  begin
+    B.OnLoadStart := FSaveOnLoadStart;
+    B.OnLoadEnd := FSaveOnLoadEnd;
+    B.OnLoadError := FSaveOnLoadError;
+  end;
+  FIsSetEvents := False;
+  FSaveOnLoadStart := nil;
+  FSaveOnLoadEnd := nil;
+  FSaveOnLoadError := nil;
 end;
 
 procedure TCefWebAction.OnLoadEnd(Sender: TObject; const browser: ICefBrowser;
   const frame: ICefFrame; httpStatusCode: Integer);
 begin
-  if frame.IsMain then
+  if Assigned(FSaveOnLoadEnd) then
+    FSaveOnLoadEnd(Sender, browser, frame, httpStatusCode);
+  if (not FDestroying) and frame.IsMain then
   begin
     LogInfo('loadEnd %s', [frame.Url]);
-    FLoadEvent.SetEvent
+    FLoadEvent.SetEvent()
   end;
-  if Assigned(FSaveOnLoadEnd) then
-    FSaveOnLoadEnd(Sender, browser, frame, httpStatusCode)
 end;
 
 procedure TCefWebAction.OnLoadError(Sender: TObject; const browser: ICefBrowser;
   const frame: ICefFrame; errorCode: Integer; const errorText,
   failedUrl: ustring);
 begin
-  if frame.IsMain then
+  if Assigned(FSaveOnLoadError) then
+    FSaveOnLoadError(Sender, browser, frame, errorCode, errorText, failedUrl);
+  if (not FDestroying) and frame.IsMain then
   begin
     FErrorStr := Format('loadError %d "%s" %s', [errorCode, errorText, failedUrl]);
     LogError(FErrorStr);
     FFail := True;
     FLoadEvent.SetEvent
   end;
-  if Assigned(FSaveOnLoadError) then
-    FSaveOnLoadError(Sender, browser, frame, errorCode, errorText, failedUrl)
 end;
 
 procedure TCefWebAction.OnLoadStart(Sender: TObject; const browser: ICefBrowser;
   const frame: ICefFrame; transitionType: TCefTransitionType);
 begin
-  if frame.IsMain then
+  if Assigned(FSaveOnLoadStart) then
+    FSaveOnLoadStart(Sender, browser, frame, transitionType);
+  if (not FDestroying) and frame.IsMain then
   begin
     LogInfo('loadStart #%d %s', [transitionType, frame.Url]);
     FIsNavigation := True;
   end;
-  if Assigned(FSaveOnLoadStart) then
-    FSaveOnLoadStart(Sender, browser, frame, transitionType)
+
 end;
 
 function TCefWebAction.DoStartEvent: Boolean;
@@ -187,9 +193,31 @@ begin
     Result := False
 end;
 
+function SameMethod(const AMethod1, AMethod2: TOnLoadStart): Boolean; overload;
+begin
+  Result := Assigned(AMethod1) and
+            Assigned(AMethod2) and
+            (TMethod(AMethod1) = TMethod(AMethod2))
+end;
+function SameMethod(const AMethod1, AMethod2: TOnLoadEnd): Boolean; overload;
+begin
+  Result := Assigned(AMethod1) and
+            Assigned(AMethod2) and
+            (TMethod(AMethod1) = TMethod(AMethod2))
+end;
+function SameMethod(const AMethod1, AMethod2: TOnLoadError): Boolean; overload;
+begin
+  Result := Assigned(AMethod1) and
+            Assigned(AMethod2) and
+            (TMethod(AMethod1) = TMethod(AMethod2))
+end;
+
 function TCefWebAction.Start: Boolean;
 var B: TChromium;
 begin
+  FSaveOnLoadStart := nil;
+  FSaveOnLoadEnd := nil;
+  FSaveOnLoadError := nil;
   B := Chromium;
   if Assigned(B) then
   begin
@@ -201,14 +229,22 @@ begin
         Sleep(NAV_WAIT_TIMEOUT);
       end;
      }
-
-    FSaveOnLoadStart := B.OnLoadStart;
-    FSaveOnLoadEnd   := B.OnLoadEnd;
-    FSaveOnLoadError := B.OnLoadError;
-
-    B.OnLoadStart := OnLoadStart;
-    B.OnLoadEnd   := OnLoadEnd;
-    B.OnLoadError := OnLoadError;
+    if not SameMethod(B.OnLoadStart, OnLoadStart) then
+    begin
+      FSaveOnLoadStart := B.OnLoadStart;
+      B.OnLoadStart := OnLoadStart;
+    end;
+    if not SameMethod(B.OnLoadEnd, OnLoadEnd) then
+    begin
+      FSaveOnLoadEnd := B.OnLoadEnd;
+      B.OnLoadEnd := OnLoadEnd;
+    end;
+    if not SameMethod(B.OnLoadError, OnLoadError) then
+    begin
+      FSaveOnLoadError := B.OnLoadError;
+      B.OnLoadError := OnLoadError;
+    end;
+    FIsSetEvents := True;
   end;
 
   Result := inherited Start();
@@ -231,8 +267,8 @@ begin
       if Result = wrTimeout then
         Result := wrSignaled
     end;
-
   end;
+  Clear();
 end;
 
 
