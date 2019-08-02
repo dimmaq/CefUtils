@@ -81,7 +81,7 @@ begin
     FailMsg2('fail scroll to element');
     Exit(False);
   end;
-  bol := CefUIMouseMoveToElement(Chromium.Browser, FAbortEvent, FController.Cursor, FSpeed, FTag, FId, FName, FClass, FAttrName, FValueRegExpr, FTextRegExpr);
+  bol := CefUIMouseMoveToElement(Chromium.Browser, FAbortEvent, FController.Cursor, FSpeed, False, FTag, FId, FName, FClass, FAttrName, FValueRegExpr, FTextRegExpr);
   if not bol then
   begin
     FailMsg2('fail mouse move to element');

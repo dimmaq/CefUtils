@@ -19,6 +19,7 @@ type
     AttrName: string;
     AttrValue: string;
     Text: string;
+    Center: Boolean;
     constructor Create(const ATag, AId, AName, AClass, AAttrName, AAttrValue, AText: string);
     class function CreateId(const AId: string; const ATag: string = ''): TElementParams; static;
     class function CreateTagText(const ATag, ATextRegExp: string): TElementParams; static;
@@ -291,7 +292,8 @@ begin
   Class_ := AClass;
   AttrName := AAttrName;
   AttrValue := AAttrValue;
-  Text := AText
+  Text := AText;
+  Center := False;
 end;
 
 class function TElementParams.CreateCefListValue(
