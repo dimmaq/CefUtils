@@ -21,7 +21,7 @@ type
     FLogger: ILoggerInterface;
     FAbortEvent: TEvent;
     FEventObjOwn: Boolean;
-    FName: string;
+    FActionName: string;
     FTimeout: Integer;
     FAborted: Boolean;
     FFail: Boolean;
@@ -74,6 +74,7 @@ type
     property AbortEvent: TEvent read FAbortEvent;
     property ErrorStr: string read FErrorStr;
     property IgnoreFail: Boolean read FIgnoreFail;
+    property ActionName: string read FActionName;
   end;
 
 function SleepEvents(E1, E2: TEvent; const A: Integer): TWaitResult; overload;
@@ -90,6 +91,9 @@ uses
 
 const
   TIMEOUT_DEF = 1000;
+
+  WAIT_RESULT_STR: array[TWaitResult] of string = ('wrSignaled', 'wrTimeout',
+    'wrAbandoned', 'wrError', 'wrIOCompletion');
 
 procedure SwapEvents(var E1, E2: TEvent);
 begin
@@ -129,15 +133,19 @@ end;
 
 constructor TCefWebActionBase.Create(const AName: string; const ALogger: ILoggerInterface;
   const AWeb: TChromium; const ATimeout: Integer; const AAbortEvent: TEvent);
+var logprefix: string;
 begin
   inherited Create;
 
   FChromium := AWeb;
-  FName := AName;
+  FActionName := AName;
 
   if Assigned(ALogger) then
   begin
-    FLog := TReLog3.Create('~' + AName, ALogger, '');
+    logprefix := '';
+    if FActionName <> '' then
+      logprefix := '/' + FActionName;
+    FLog := TReLog3.Create(logprefix, ALogger, '');
     FLogger := FLog;
   end;
 
@@ -311,13 +319,27 @@ function TCefWebActionBase.Sleep(const A: Integer;
   const AWaitObj: TEvent; const AAbortOnFail: Boolean): TWaitResult;
 var fired: THandleObject;
 begin
-  if IsFail and AAbortOnFail then
-    Exit(wrError);
-  if IsAborted then
-    Exit(wrAbandoned);
-
   LogDebug('.sleep ' + A.ToString);
+  if IsFail and AAbortOnFail then
+  begin
+    LogDebug('AbortOnFail');
+    Exit(wrError);
+  end;
+  if IsAborted then
+  begin
+    LogDebug('IsAborted');
+    Exit(wrAbandoned);
+  end;
+
   Result := SleepEvents(FAbortEvent, AWaitObj, A, fired);
+  if (FAbortEvent <> nil) and (fired = FAbortEvent) then
+    LogDebug(WAIT_RESULT_STR[Result] + ' ~AbortEvent')
+  else
+  if (AWaitObj <> nil) and (fired = AWaitObj) then
+    LogDebug(WAIT_RESULT_STR[Result] + ' ~WaitObj')
+  else
+    LogDebug(WAIT_RESULT_STR[Result] + ' ~' + Cardinal(fired).ToString);
+
   if Result = wrSignaled then
     if FAbortEvent = fired then
     begin

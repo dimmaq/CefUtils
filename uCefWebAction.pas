@@ -135,6 +135,7 @@ var
   cr: TChromium;
   b: Boolean;
 begin
+  LogDebug('~clear');
   cr := Chromium;
   b := FIsSetEvents;
   FIsSetEvents := False;
@@ -149,7 +150,7 @@ begin
       FLock.Leave
     end;
   end;
-  Sleep(1);
+  TThread.Sleep(1);
   FLock.Enter;
   try
     FSaveOnLoadStart := nil;
@@ -193,9 +194,9 @@ begin
       save(Sender, browser, frame, errorCode, errorText, failedUrl);
     if FIsSetEvents and frame.IsMain then
     begin
+      FFail := True;
       FErrorStr := Format('loadError %d "%s" %s', [errorCode, errorText, failedUrl]);
       LogError(FErrorStr);
-      FFail := True;
       FLoadEvent.SetEvent
     end;
   finally
@@ -256,6 +257,7 @@ end;
 function TCefWebAction.Start: Boolean;
 var B: TChromium;
 begin
+  LogDebug('~start');
   FSaveOnLoadStart := nil;
   FSaveOnLoadEnd := nil;
   FSaveOnLoadError := nil;
@@ -287,17 +289,18 @@ begin
     end;
     FIsSetEvents := True;
   end;
-
   Result := inherited Start();
 end;
 
 function TCefWebAction.Wait: TWaitResult;
 begin
+  LogDebug('wait NAV_WAIT_TIMEOUT');
   Result := Sleep(NAV_WAIT_TIMEOUT, FLoadEvent);
   if Result = wrTimeout then
   begin
     if FIsNavigation then
     begin
+      LogDebug('wait TIMEOUT');
       Result := Sleep(IfEmpty(FTimeout, TIMEOUT_DEF), FLoadEvent);
       if (Result = wrTimeout) and not FFail then
         Result := wrSignaled

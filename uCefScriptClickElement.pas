@@ -30,7 +30,7 @@ type
         const AParent: TCefScriptBase); overload;
     constructor Create(const AId: string; const ASetAsNav: Boolean;
         const AParent: TCefScriptBase); overload;
-    class function GetName: string; override;
+    class function GetScriptName: string; override;
   end;
 
 
@@ -46,7 +46,7 @@ constructor TScriptClickElement.Create(const ASpeed: TCefUISpeed; const ATag, AI
     AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string; const ASetAsNav: Boolean;
     const AParent: TCefScriptBase);
 begin
-  inherited Create(ASetAsNav, AParent);
+  inherited Create('', ASetAsNav, AParent);
   FSpeed := ASpeed;
   FTag := ATag;
   FId := AId;
@@ -91,7 +91,7 @@ begin
   Exit(True);
 end;
 
-class function TScriptClickElement.GetName: string;
+class function TScriptClickElement.GetScriptName: string;
 begin
   Result := 'click';
 end;

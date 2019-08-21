@@ -20,12 +20,12 @@ type
     FNavProc0: TCefScriptNavProc0;
     function DoNavEvent(const AWebAction: TCefWebAction): Boolean; override;
   public
-    constructor Create(const AUrl: string; const ANavFunc: TCefScriptNavFunc;
+    constructor Create(const AActionName, AUrl: string; const ANavFunc: TCefScriptNavFunc;
       const ANavProc0: TCefScriptNavProc0;
       const ASetIsNav: Boolean; const AParent: TCefScriptBase); overload;
-    constructor Create(const AUrl: string; const ASetIsNav: Boolean;
+    constructor Create(const AActionName, AUrl: string; const ASetIsNav: Boolean;
       const AParent: TCefScriptBase); overload;
-    class function GetName: string; override;
+    class function GetScriptName: string; override;
   end;
 
 
@@ -33,20 +33,20 @@ implementation
 
 { TCefScriptNav }
 
-constructor TCefScriptNav.Create(const AUrl: string; const ANavFunc: TCefScriptNavFunc;
+constructor TCefScriptNav.Create(const AActionName, AUrl: string; const ANavFunc: TCefScriptNavFunc;
   const ANavProc0: TCefScriptNavProc0;
   const ASetIsNav: Boolean; const AParent: TCefScriptBase);
 begin
-  inherited Create(ASetIsNav, AParent);
+  inherited Create(AActionName, ASetIsNav, AParent);
   FNavProc0 := ANavProc0;
   FNavFunc := ANavFunc;
   FUrl := AUrl;
 end;
 
-constructor TCefScriptNav.Create(const AUrl: string; const ASetIsNav: Boolean;
+constructor TCefScriptNav.Create(const AActionName, AUrl: string; const ASetIsNav: Boolean;
   const AParent: TCefScriptBase);
 begin
-  Create(AUrl, nil, nil, ASetIsNav, AParent);
+  Create(AActionName, AUrl, nil, nil, ASetIsNav, AParent);
 end;
 
 function TCefScriptNav.DoNavEvent(const AWebAction: TCefWebAction): Boolean;
@@ -68,9 +68,9 @@ begin
   end;
 end;
 
-class function TCefScriptNav.GetName: string;
+class function TCefScriptNav.GetScriptName: string;
 begin
-  Result := 'nav';
+  Result := 'nav'
 end;
 
 end.
