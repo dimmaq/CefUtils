@@ -125,6 +125,8 @@ function CefUIGetElementAsMarkup(const AAction: TCefScriptBase; const AElement: 
 implementation
 
 //{$DEFINE LOG_XY}
+//{$DEFINE MOUSE_CURSOR}
+
 
 uses
   {$IFDEF LOG_XY}
@@ -540,7 +542,9 @@ end;
 
 procedure CefUIMouseSetPointVisual(const ABrowser: ICefBrowser; AToPoint: TPoint);
 begin
+  {$IFDEF MOUSE_CURSOR}
   ABrowser.MainFrame.ExecuteJavaScript('mymouse00 = document.getElementById(''mymouse00''); mymouse00.style.left = "'+IntToStr(AToPoint.X+2)+'px"; mymouse00.style.top = "'+IntToStr(AToPoint.Y+2)+'px";', '', 0);
+  {$ENDIF}
 end;
 
 function CefUIMouseSetToPoint(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
