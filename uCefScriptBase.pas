@@ -28,15 +28,15 @@ type
     function GetChromium: TChromium; override;
     procedure ParseParams(var A: string); virtual;
   public
-    constructor Create(const AParams: string; const AIgnoreFail: Boolean;
+    constructor Create(const AActionName, AParams: string; const AIgnoreFail: Boolean;
       const ALogger: ILoggerInterface; const ABrowser: TChromium;
       const AController: TCefControllerBase; const AAbortEvent: TEvent); overload;
-    constructor Create(const AParent: TCefScriptBase; const AParams: string;
+    constructor Create(const AActionName: string; const AParent: TCefScriptBase; const AParams: string;
       const AIgnoreFail: Boolean); overload;
-    constructor Create(const AParent: TCefScriptBase;
+    constructor Create(const AActionName: string; const AParent: TCefScriptBase;
       const AIgnoreFail: Boolean); overload;
-    constructor Create(const AParent: TCefScriptBase; const AParams: string); overload;
-    constructor Create(const AParent: TCefScriptBase); overload;
+    constructor Create(const AActionName: string; const AParent: TCefScriptBase; const AParams: string); overload;
+    constructor Create(const AActionName: string; const AParent: TCefScriptBase); overload;
     destructor Destroy; override;
 
     procedure AppLog(const ALevel: TLogLevel; const A: string); virtual;
@@ -55,7 +55,7 @@ type
 
     function GetBrowserPageSource(var AHtml: string): Boolean;
 //    procedure SaveHtmlDump;
-    class function GetName: string; virtual;
+    class function GetScriptName: string; virtual;
 
     property Controller: TCefControllerBase read FController;
     property Parent: TCefScriptBase read FParent;
@@ -84,13 +84,17 @@ type
 
 { TCefScriptBase }
 
-constructor TCefScriptBase.Create(const AParams: string;
+constructor TCefScriptBase.Create(const AActionName, AParams: string;
   const AIgnoreFail: Boolean; const ALogger: ILoggerInterface;
   const ABrowser: TChromium; const AController: TCefControllerBase;
   const AAbortEvent: TEvent);
-var params: string;
+var params, nam: string;
 begin
-  inherited Create(GetName(), ALogger, ABrowser, 0, AAbortEvent);
+  nam := AActionName;
+  if nam = '' then
+    nam := GetScriptName();
+
+  inherited Create(nam, ALogger, ABrowser, 0, AAbortEvent);
   FAutoSetFail := True;
   FIgnoreFail := AIgnoreFail;
 
@@ -100,27 +104,27 @@ begin
   ParseParams(params);
 end;
 
-constructor TCefScriptBase.Create(const AParent: TCefScriptBase; const AParams: string;
+constructor TCefScriptBase.Create(const AActionName: string; const AParent: TCefScriptBase; const AParams: string;
   const AIgnoreFail: Boolean);
 begin
-  Create(AParams, AIgnoreFail, AParent.Logger, AParent.Chromium, AParent.FController, AParent.FAbortEvent);
+  Create(AActionName, AParams, AIgnoreFail, AParent.Logger, AParent.Chromium, AParent.FController, AParent.FAbortEvent);
   FParent := AParent
 end;
 
-constructor TCefScriptBase.Create(const AParent: TCefScriptBase; const AIgnoreFail: Boolean);
+constructor TCefScriptBase.Create(const AActionName: string; const AParent: TCefScriptBase; const AIgnoreFail: Boolean);
 begin
-  Create(AParent, '', AIgnoreFail)
+  Create(AActionName, AParent, '', AIgnoreFail)
 end;
 
-constructor TCefScriptBase.Create(const AParent: TCefScriptBase; const AParams: string);
+constructor TCefScriptBase.Create(const AActionName: string; const AParent: TCefScriptBase; const AParams: string);
 begin
-  Create(AParams, AParent.IgnoreFail, AParent.Logger, AParent.Chromium, AParent.FController, AParent.FAbortEvent);
+  Create(AActionName, AParams, AParent.IgnoreFail, AParent.Logger, AParent.Chromium, AParent.FController, AParent.FAbortEvent);
   FParent := AParent
 end;
 
-constructor TCefScriptBase.Create(const AParent: TCefScriptBase);
+constructor TCefScriptBase.Create(const AActionName: string; const AParent: TCefScriptBase);
 begin
-  Create(AParent, '', AParent.IgnoreFail)
+  Create(AActionName, AParent, '', AParent.IgnoreFail)
 end;
 
 destructor TCefScriptBase.Destroy;
@@ -176,7 +180,7 @@ begin
 end;
 
 
-class function TCefScriptBase.GetName: string;
+class function TCefScriptBase.GetScriptName: string;
 begin
   Result := '*'
 end;

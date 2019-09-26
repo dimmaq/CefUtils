@@ -27,16 +27,16 @@ type
     FAction: TCefWebActionBase;
     FScriptDict: TCefScriptDict;
     //---
-    function DoNavGoBack: Boolean;
+    function DoNavGoBack(const AActionName: string): Boolean;
     function RunScript(const AScript: string; const ASetFail: Boolean = True): Boolean;
-    function RunScriptNav(const AUrl: string; const ANavFunc: TCefScriptNavFunc;
+    function RunScriptNav(const AActionName, AUrl: string; const ANavFunc: TCefScriptNavFunc;
       const ANavProc0: TCefScriptNavProc0;
       const ASetFail, AIsNavigation: Boolean): Boolean; overload;
-    function RunScriptNav(const AUrl: string; const ASetFail: Boolean = True;
+    function RunScriptNav(const AActionName: string; const AUrl: string; const ASetFail: Boolean = True;
       const AIsNavigation: Boolean = True): Boolean; overload;
-    function RunScriptNav(const ANavFunc: TCefScriptNavFunc; const ASetFail: Boolean = True;
+    function RunScriptNav(const AActionName: string; const ANavFunc: TCefScriptNavFunc; const ASetFail: Boolean = True;
       const AIsNavigation: Boolean = False): Boolean; overload;
-    function RunScriptNav(const ANavProc0: TCefScriptNavProc0; const ASetFail: Boolean = True;
+    function RunScriptNav(const AActionName: string; const ANavProc0: TCefScriptNavProc0; const ASetFail: Boolean = True;
       const AIsNavigation: Boolean = False): Boolean; overload;
     //---
     function RunScriptClickById(const AId: string;
@@ -104,12 +104,13 @@ begin
     Result := Sleep(ATimeout) = wrTimeout
 end;
 
-function TCefScriptActionBase.DoNavGoBack: Boolean;
+function TCefScriptActionBase.DoNavGoBack(const AActionName: string): Boolean;
+
 begin
   LogInfo('go <- back');
   if Chromium.CanGoBack then
   begin
-    Result := RunScriptNav(
+    Result := RunScriptNav(AActionName,
         procedure
         begin
           Chromium.GoBack();
@@ -237,7 +238,7 @@ begin
     if bol then
     begin
       DoPause(PAUSE_DEF);
-      bol := RunScriptNav(
+      bol := RunScriptNav('nav-click',
         procedure
         begin
           LogDebug('click element');
@@ -278,35 +279,35 @@ begin
   FScriptDict := A
 end;
 
-function TCefScriptActionBase.RunScriptNav(const AUrl: string;
+function TCefScriptActionBase.RunScriptNav(const AActionName, AUrl: string;
   const ANavFunc: TCefScriptNavFunc; const ANavProc0: TCefScriptNavProc0;
   const ASetFail, AIsNavigation: Boolean): Boolean;
 begin
   RunActionStopFree();
   try
-    FAction := TCefScriptNav.Create(AUrl, ANavFunc, ANavProc0, AIsNavigation, Self);
+    FAction := TCefScriptNav.Create(AActionName, AUrl, ANavFunc, ANavProc0, AIsNavigation, Self);
     RunActionStartWait(Result, ASetFail);
   finally
     FreeAndNil(FAction);
   end;
 end;
 
-function TCefScriptActionBase.RunScriptNav(const AUrl: string;
+function TCefScriptActionBase.RunScriptNav(const AActionName, AUrl: string;
   const ASetFail, AIsNavigation: Boolean): Boolean;
 begin
-  Result := RunScriptNav(AUrl, nil, nil, ASetFail, AIsNavigation)
+  Result := RunScriptNav(AActionName, AUrl, nil, nil, ASetFail, AIsNavigation)
 end;
 
-function TCefScriptActionBase.RunScriptNav(const ANavFunc: TCefScriptNavFunc;
-  const ASetFail, AIsNavigation: Boolean): Boolean;
+function TCefScriptActionBase.RunScriptNav(const AActionName: string;
+  const ANavFunc: TCefScriptNavFunc; const ASetFail, AIsNavigation: Boolean): Boolean;
 begin
-  Result := RunScriptNav('', ANavFunc, nil, ASetFail, AIsNavigation)
+  Result := RunScriptNav(AActionName, '', ANavFunc, nil, ASetFail, AIsNavigation)
 end;
 
-function TCefScriptActionBase.RunScriptNav(const ANavProc0: TCefScriptNavProc0;
-  const ASetFail, AIsNavigation: Boolean): Boolean;
+function TCefScriptActionBase.RunScriptNav(const AActionName: string;
+  const ANavProc0: TCefScriptNavProc0; const ASetFail, AIsNavigation: Boolean): Boolean;
 begin
-  Result := RunScriptNav('', nil, ANavProc0, ASetFail, AIsNavigation)
+  Result := RunScriptNav(AActionName, '', nil, ANavProc0, ASetFail, AIsNavigation)
 end;
 
 procedure TCefScriptActionBase.Abort;

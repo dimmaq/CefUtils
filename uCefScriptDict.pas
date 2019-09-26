@@ -52,7 +52,7 @@ end;
 
 procedure TCefScriptDict.Add(const AClass: TCefScriptClass);
 begin
-  Add(AClass.GetName(), AClass)
+  Add(AClass.GetScriptName(), AClass)
 end;
 
 constructor TCefScriptDict.Create;
@@ -132,7 +132,7 @@ var
 begin
   clss := ParseLine(ALine, cat, param, ignor);
   if Assigned(clss) then
-    Exit(clss.Create(AParent, param, ignor));
+    Exit(clss.Create('', AParent, param, ignor));
 
   Result := nil;
 end;
@@ -149,7 +149,7 @@ var
 begin
   clss := ParseLine(ALine, cat, param, ignor);
   if Assigned(clss) then
-    Exit(clss.Create(param, ignor, ALogger, AWebBrowser, AController, AAbortEvent));
+    Exit(clss.Create('', param, ignor, ALogger, AWebBrowser, AController, AAbortEvent));
 
   Result := nil;
 end;

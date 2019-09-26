@@ -19,6 +19,7 @@ type
   TCefWebAction = class(TCefWebActionBase)
   private
     FIsSetEvents: Boolean;
+    FLock: TCriticalSection;
     FLoadEvent: TEvent;
     FIsNavigation: Boolean;
     FOnAction: TCefWebActionEvent;
@@ -80,6 +81,7 @@ begin
   FOnActionProc := AActionProc;
   FLoadEvent := TEvent.Create;
   FLoadEvent.ResetEvent();
+  FLock := TCriticalSection.Create;
 
   inherited Create(AName, ALogger, AWeb, ATimeout, AAbortEvent);
 end;
@@ -122,64 +124,104 @@ end;
 destructor TCefWebAction.Destroy;
 begin
   Clear();
+  FLock.Enter;
   FLoadEvent.Free;
+  FLock.Free;
   inherited;
 end;
 
 procedure TCefWebAction.Clear;
-var B: TChromium;
+var
+  cr: TChromium;
+  b: Boolean;
 begin
-  B := Chromium;
-  if Assigned(B) and FIsSetEvents then
-  begin
-    B.OnLoadStart := FSaveOnLoadStart;
-    B.OnLoadEnd := FSaveOnLoadEnd;
-    B.OnLoadError := FSaveOnLoadError;
-  end;
+  LogDebug('~clear');
+  cr := Chromium;
+  b := FIsSetEvents;
   FIsSetEvents := False;
-  FSaveOnLoadStart := nil;
-  FSaveOnLoadEnd := nil;
-  FSaveOnLoadError := nil;
+  if Assigned(cr) and b then
+  begin
+    FLock.Enter;
+    try
+      cr.OnLoadStart := FSaveOnLoadStart;
+      cr.OnLoadEnd := FSaveOnLoadEnd;
+      cr.OnLoadError := FSaveOnLoadError;
+    finally
+      FLock.Leave
+    end;
+  end;
+  TThread.Sleep(1);
+  FLock.Enter;
+  try
+    FSaveOnLoadStart := nil;
+    FSaveOnLoadEnd := nil;
+    FSaveOnLoadError := nil;
+  finally
+    FLock.Leave
+  end;
 end;
 
 procedure TCefWebAction.OnLoadEnd(Sender: TObject; const browser: ICefBrowser;
   const frame: ICefFrame; httpStatusCode: Integer);
+var
+  save: TOnLoadEnd;
 begin
-  if Assigned(FSaveOnLoadEnd) then
-    FSaveOnLoadEnd(Sender, browser, frame, httpStatusCode);
-  if (not FDestroying) and frame.IsMain then
-  begin
-    LogInfo('loadEnd %s', [frame.Url]);
-    FLoadEvent.SetEvent()
+  save := FSaveOnLoadEnd;
+  FLock.Enter;
+  try
+    if Assigned(save) then
+      save(Sender, browser, frame, httpStatusCode);
+    if FIsSetEvents and frame.IsMain then
+    begin
+      LogInfo('loadEnd %s', [frame.Url]);
+      FLoadEvent.SetEvent()
+    end;
+  finally
+    FLock.Leave
   end;
 end;
 
 procedure TCefWebAction.OnLoadError(Sender: TObject; const browser: ICefBrowser;
   const frame: ICefFrame; errorCode: Integer; const errorText,
   failedUrl: ustring);
+var
+  save: TOnLoadError;
 begin
-  if Assigned(FSaveOnLoadError) then
-    FSaveOnLoadError(Sender, browser, frame, errorCode, errorText, failedUrl);
-  if (not FDestroying) and frame.IsMain then
-  begin
-    FErrorStr := Format('loadError %d "%s" %s', [errorCode, errorText, failedUrl]);
-    LogError(FErrorStr);
-    FFail := True;
-    FLoadEvent.SetEvent
+  save := FSaveOnLoadError;
+  FLock.Enter;
+  try
+    if Assigned(save) then
+      save(Sender, browser, frame, errorCode, errorText, failedUrl);
+    if FIsSetEvents and frame.IsMain then
+    begin
+      FFail := True;
+      FErrorStr := Format('loadError %d "%s" %s', [errorCode, errorText, failedUrl]);
+      LogError(FErrorStr);
+      FLoadEvent.SetEvent
+    end;
+  finally
+    FLock.Leave
   end;
 end;
 
 procedure TCefWebAction.OnLoadStart(Sender: TObject; const browser: ICefBrowser;
   const frame: ICefFrame; transitionType: TCefTransitionType);
+var
+  save: TOnLoadStart;
 begin
-  if Assigned(FSaveOnLoadStart) then
-    FSaveOnLoadStart(Sender, browser, frame, transitionType);
-  if (not FDestroying) and frame.IsMain then
-  begin
-    LogInfo('loadStart #%d %s', [transitionType, frame.Url]);
-    FIsNavigation := True;
+  save := FSaveOnLoadStart;
+  FLock.Enter;
+  try
+    if Assigned(save) then
+      save(Sender, browser, frame, transitionType);
+    if FIsSetEvents and frame.IsMain then
+    begin
+      LogInfo('loadStart #%d %s', [transitionType, frame.Url]);
+      FIsNavigation := True;
+    end;
+  finally
+    FLock.Leave
   end;
-
 end;
 
 function TCefWebAction.DoStartEvent: Boolean;
@@ -215,6 +257,7 @@ end;
 function TCefWebAction.Start: Boolean;
 var B: TChromium;
 begin
+  LogDebug('~start');
   FSaveOnLoadStart := nil;
   FSaveOnLoadEnd := nil;
   FSaveOnLoadError := nil;
@@ -246,17 +289,18 @@ begin
     end;
     FIsSetEvents := True;
   end;
-
   Result := inherited Start();
 end;
 
 function TCefWebAction.Wait: TWaitResult;
 begin
+  LogDebug('wait NAV_WAIT_TIMEOUT');
   Result := Sleep(NAV_WAIT_TIMEOUT, FLoadEvent);
   if Result = wrTimeout then
   begin
     if FIsNavigation then
     begin
+      LogDebug('wait TIMEOUT');
       Result := Sleep(IfEmpty(FTimeout, TIMEOUT_DEF), FLoadEvent);
       if (Result = wrTimeout) and not FFail then
         Result := wrSignaled

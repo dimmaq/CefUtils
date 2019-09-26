@@ -71,12 +71,12 @@ function CefUIMouseSetToPoint(const ABrowser: ICefBrowser; const AAbortEvent: TE
 function CefUIMouseSetToPoint(const AAction: TCefScriptBase;
   const AToPoint: TPoint; const ATimeout: Integer): Boolean; overload;
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  var APoint: TPoint; const ATimeout, AStep: Integer;
+  var APoint: TPoint; const ATimeout, AStep: Integer; const AToCenter: Boolean;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  var APoint: TPoint; const ASpeed: TCefUISpeed;
+  var APoint: TPoint; const ASpeed: TCefUISpeed; const AToCenter: Boolean;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
-function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed; const AToCenter: Boolean;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean; overload;
 function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
   const AElement: TElementParams): Boolean; overload;
@@ -125,6 +125,8 @@ function CefUIGetElementAsMarkup(const AAction: TCefScriptBase; const AElement: 
 implementation
 
 //{$DEFINE LOG_XY}
+//{$DEFINE MOUSE_CURSOR}
+
 
 uses
   {$IFDEF LOG_XY}
@@ -540,7 +542,9 @@ end;
 
 procedure CefUIMouseSetPointVisual(const ABrowser: ICefBrowser; AToPoint: TPoint);
 begin
+  {$IFDEF MOUSE_CURSOR}
   ABrowser.MainFrame.ExecuteJavaScript('mymouse00 = document.getElementById(''mymouse00''); mymouse00.style.left = "'+IntToStr(AToPoint.X+2)+'px"; mymouse00.style.top = "'+IntToStr(AToPoint.Y+2)+'px";', '', 0);
+  {$ENDIF}
 end;
 
 function CefUIMouseSetToPoint(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
@@ -584,7 +588,7 @@ begin
 end;
 
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  var APoint: TPoint; const ATimeout, AStep: Integer;
+  var APoint: TPoint; const ATimeout, AStep: Integer; const AToCenter: Boolean;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 var
   elem: TRect;
@@ -648,7 +652,7 @@ begin
 end;
 
 function CefUIMouseSetToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  var APoint: TPoint; const ATimeout, AStep: Integer;
+  var APoint: TPoint; const ATimeout, AStep: Integer; const AToCenter: Boolean;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 var
   elem: TRect;
@@ -657,7 +661,10 @@ begin
   elem := CefUIGetElementRect(ABrowser, AAbortEvent, ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr);
   if elem.IsEmpty then
     Exit(False);
-  ElemCenter := TPoint.Create(elem.Left + 2, elem.Top + 2);
+  if AToCenter then
+    ElemCenter := elem.CenterPoint
+  else
+    ElemCenter := TPoint.Create(elem.Left + 2, elem.Top + 2);
 
   CefUIMouseSetToPoint(ABrowser, AAbortEvent, @APoint, ElemCenter, ATimeout);
 
@@ -669,33 +676,33 @@ begin
 end;
 
 function CefUIMouseMoveToElement(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
-  var APoint: TPoint; const ASpeed: TCefUISpeed;
+  var APoint: TPoint; const ASpeed: TCefUISpeed; const AToCenter: Boolean;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 var pause: Integer;
 begin
   pause := SpeedToPause(ASpeed);
-  Result := CefUIMouseSetToElement(ABrowser, AAbortEvent, APoint, pause, 2,
+  Result := CefUIMouseSetToElement(ABrowser, AAbortEvent, APoint, pause, 2, AToCenter,
     ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr)
 end;
 
-function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
+function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed; const AToCenter: Boolean;
   const ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr: string): Boolean;
 begin
   Result := CefUIMouseMoveToElement(AAction.Chromium.Browser, AAction.AbortEvent,
-    AAction.Controller.Cursor, ASpeed, ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr)
+    AAction.Controller.Cursor, ASpeed, AToCenter, ATag, AId, AName, AClass, AAttrName, AAttrValueRegExpr, ATextRegExpr)
 end;
 
 function CefUIMouseMoveToElement(const AAction: TCefScriptBase; const ASpeed: TCefUISpeed;
   const AElement: TElementParams): Boolean;
 begin
-  Result := CefUIMouseMoveToElement(AAction, ASpeed, AElement.Tag, AElement.Id,
+  Result := CefUIMouseMoveToElement(AAction, ASpeed, AElement.Center, AElement.Tag, AElement.Id,
       AElement.Name, AElement.Class_, AElement.AttrName, AElement.AttrValue, AElement.Text)
 end;
 
 function CefUIMouseMoveToElement(const AAction: TCefScriptBase;
   const AElement: TElementParams): Boolean;
 begin
-  Result := CefUIMouseMoveToElement(AAction, AAction.Controller.Speed, AElement.Tag, AElement.Id,
+  Result := CefUIMouseMoveToElement(AAction, AAction.Controller.Speed, AElement.Center, AElement.Tag, AElement.Id,
       AElement.Name, AElement.Class_, AElement.AttrName, AElement.AttrValue, AElement.Text)
 end;
 
