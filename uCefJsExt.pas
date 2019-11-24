@@ -16,8 +16,11 @@ uses
   uCEFMiscFunctions, uCEFv8Context;
 
 type
-  TJsFunc = procedure(const obj: ICefv8Value; const arguments: TCefv8ValueArray;
-    var retval: ICefv8Value; var exception: ustring) of object;
+  TJsFunc = procedure(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring) of object;
+  TJsParam = TPair<TJsFunc, TJsFunc>;
+
+  THandlersDict = TDictionary<string, TJsFunc>;
+  TParamsDict = TDictionary<string, TJsParam>;
 
   TCefJsExt = class;
   TCefJsExtClass = class of TCefJsExt;
@@ -25,14 +28,18 @@ type
   TCefJsExt = class(TCefv8HandlerOwn)
   private
     FName: string;
+    FTestParam: string;
   private
     procedure Click(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
     procedure FocusClick(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
     procedure KeyPress(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
-    procedure GetParamHandler(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
     procedure Notify(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
+    procedure GetParamHandler(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
+    procedure TestParamGetter(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
+    procedure TestParamSetter(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
   protected
-    FHandlers: TDictionary<string,TJsFunc>;
+    FHandlers: THandlersDict;
+    FParams: TParamsDict;
     function GetParam(const AName: string; out AValue: ICefv8Value): Boolean; virtual;
   protected
     function Execute(const name: ustring; const obj: ICefv8Value; const arguments: TCefv8ValueArray;
@@ -54,6 +61,8 @@ function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Intege
   var AValue: Integer): Boolean; overload;
 function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
   var AValue: string): Boolean; overload;
+function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
+  var AValue: Boolean): Boolean; overload;
 
 implementation
 
@@ -74,7 +83,8 @@ function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Intege
   var AValue: Integer): Boolean;
 var v: ICefv8Value;
 begin
-  if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
+
+  if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
   begin
     if v.IsInt then
     begin
@@ -95,11 +105,26 @@ function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Intege
   var AValue: string): Boolean;
 var v: ICefv8Value;
 begin
-  if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
+  if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
   begin
     if v.IsString then
     begin
       AValue := v.GetStringValue;
+      Exit(True)
+    end
+  end;
+  Result := False;
+end;
+
+function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
+  var AValue: Boolean): Boolean;
+var v: ICefv8Value;
+begin
+  if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
+  begin
+    if v.IsBool then
+    begin
+      AValue := v.GetBoolValue();
       Exit(True)
     end
   end;
@@ -131,11 +156,14 @@ end;
 constructor TCefJsExt.Create(const AName: string);
 begin
   inherited Create;
-  Name := AName
+  Name := AName;
+  FHandlers := THandlersDict.Create;
+  FParams := TParamsDict.Create;
 end;
 
 destructor TCefJsExt.Destroy;
 begin
+  FParams.Free;
   FHandlers.Free;
   inherited;
 end;
@@ -144,12 +172,14 @@ procedure TCefJsExt.AfterConstruction;
 begin
   inherited;
 
-  FHandlers := TDictionary<string,TJsFunc>.Create;
   FHandlers.Add('click', Click);
   FHandlers.Add('focusClick', FocusClick);
   FHandlers.Add('keyPress', KeyPress);
-  FHandlers.Add('getParam', GetParamHandler);
   FHandlers.Add('notify', Notify);
+  FHandlers.Add('getParam', GetParamHandler);
+
+  FTestParam := '42';
+  FParams.Add('testParam', TJSParam.Create(TestParamGetter, TestParamSetter));
 end;
 
 procedure TCefJsExt.Notify(const obj: ICefv8Value;
@@ -161,9 +191,28 @@ begin
   if TryGetArgument(arguments, 0, s) then
   begin
     CefSendProcessMessageCurrentContextToBrowser(CefAppMessageTypeVal(VAL_NOTIFY_STR, s))
-  end;
+  end
 end;
-
+
+
+procedure TCefJsExt.TestParamGetter(const obj: ICefv8Value;
+  const arguments: TCefv8ValueArray; var retval: ICefv8Value;
+  var exception: ustring);
+begin
+  retval := TCefv8ValueRef.NewString(FTestParam)
+end;
+
+procedure TCefJsExt.TestParamSetter(const obj: ICefv8Value;
+  const arguments: TCefv8ValueArray; var retval: ICefv8Value;
+  var exception: ustring);
+var z: string;
+begin
+  if TryGetArgument(arguments, 0, z) then
+    FTestParam := z
+  else
+    exception := 'no_string'
+end;
+
 procedure TCefJsExt.Click(const obj: ICefv8Value;
   const arguments: TCefv8ValueArray; var retval: ICefv8Value;
   var exception: ustring);
@@ -242,7 +291,9 @@ begin
 end;
 
 function TCefJsExt.GetJsCode: string;
-var z: string;
+var z,g,s: string;
+  p: TPair<string,TJsParam>;
+  gf, sf: TJsFunc;
 begin
   Result := 'var ' + FName + ';' +
             'if (!' + FName + ')' +
@@ -255,8 +306,37 @@ begin
                        '    return ' + z + '(...theArgs);' +
                        '  };';
 
+  for p in FParams do
+  begin
+    z := p.Key;
+    gf := p.Value.Key;
+    if Assigned(gf) then
+    begin
+      g := '_get_' + z;
+      Result := Result +
+                         '  ' + FName + '.__defineGetter__(''' + z + ''', function() {' +
+                         '    native function ' + g + '();' +
+                         '    return ' + g + '();' +
+                         '  });';
+      FHandlers.Add(g, gf);
+    end;
+
+    sf := p.Value.Value;
+    if Assigned(sf) then
+    begin
+      s := '_set_' + z;
+      Result := Result +
+                         '  ' + FName + '.__defineSetter__(''' + z + ''', function(b) {' +
+                         '    native function ' + s + '();' +
+                         '    if(b) ' + s + '(b);' +
+                         '  });';
+      FHandlers.Add(s, sf);
+    end;
+  end;
+
   Result := Result + '})();';
 end;
+
 
 function TCefJsExt.GetParam(const AName: string;
   out AValue: ICefv8Value): Boolean;
