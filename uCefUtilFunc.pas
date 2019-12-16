@@ -437,7 +437,8 @@ begin
   CefSendProcessMessageBrowserToRender(ABrowser, msg)
 end;
 
-procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName, AValue: string);
+
+procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AName, AValue: string);
 var cefval: ICefValue;
 begin
   cefval := TCefValueRef.New;
@@ -463,7 +464,7 @@ procedure ContextSetPreferenceIfCan(const AContext: ICefRequestContext; const AN
 var cefval: ICefValue;
 begin
   cefval := TCefValueRef.New;
-  cefval.SetBool(Ord(AValue));
+  cefval.SetBool(AValue);
   ContextSetPreferenceIfCan(AContext, AName, cefval)
 end;
 
