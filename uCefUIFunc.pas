@@ -1,4 +1,4 @@
-unit uCefUIFunc;
+п»їunit uCefUIFunc;
 
 interface
 
@@ -124,7 +124,7 @@ function CefUIGetElementAsMarkup(const AAction: TCefScriptBase; const AElement: 
 
 implementation
 
-//{$DEFINE LOG_XY}
+{$DEFINE LOG_XY}
 //{$DEFINE MOUSE_CURSOR}
 
 
@@ -143,7 +143,7 @@ uses
 
 
 const
-  CLICK_PAUSE_DEF = 70;
+  CLICK_PAUSE_DEF = 30; // cef80 set 0, РёРЅР°С‡Рµ РЅРµ РЅР°Р¶РёРјР°РµС‚СЃСЏ
 
 function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const A: ICefProcessMessage): ICefListValue;
@@ -604,36 +604,36 @@ begin
     Exit(False);
   ElemCenter := elem.CenterPoint;
 
-  // направление True - назад
+  // РЅР°РїСЂР°РІР»РµРЅРёРµ True - РЅР°Р·Р°Рґ
   xb := ElemCenter.X < APoint.X;
   yb := ElemCenter.y < APoint.y;
-  // Первая точка прямой
+  // РџРµСЂРІР°СЏ С‚РѕС‡РєР° РїСЂСЏРјРѕР№
   //xs := Min(ElemCenter.X, APoint.X);
   //ys := Min(ElemCenter.Y, APoint.Y);
-  // Последняя точка прятой
+  // РџРѕСЃР»РµРґРЅСЏСЏ С‚РѕС‡РєР° РїСЂСЏС‚РѕР№
   //xf := Max(ElemCenter.X, APoint.X);
   //yf := Max(ElemCenter.Y, APoint.Y);
-  // длинная  прямой по осям
+  // РґР»РёРЅРЅР°СЏ  РїСЂСЏРјРѕР№ РїРѕ РѕСЃСЏРј
   lx := abs(ElemCenter.X-APoint.X);
   ly := abs(ElemCenter.Y-APoint.Y);
-  // длинна прямой
+  // РґР»РёРЅРЅР° РїСЂСЏРјРѕР№
   len := Sqrt(IntPower(lx, 2) + IntPower(ly, 2));
-  // кол-во шагов
+  // РєРѕР»-РІРѕ С€Р°РіРѕРІ
   stepCount := Round(len / AStep);
   if stepCount < 1 then
     stepCount := 1;
-  // длина шага по прямой
+  // РґР»РёРЅР° С€Р°РіР° РїРѕ РїСЂСЏРјРѕР№
   //step := len / stepCount;
-  // длина шага по осям
+  // РґР»РёРЅР° С€Р°РіР° РїРѕ РѕСЃСЏРј
   xk := lx / stepCount;
   yk := ly / stepCount;
-  // если в обратную торону
+  // РµСЃР»Рё РІ РѕР±СЂР°С‚РЅСѓСЋ С‚РѕСЂРѕРЅСѓ
   if xb then
     xk := -1 * xk;
   if yb then
     yk := -1 * yk;
 
-  // текущее положение
+  // С‚РµРєСѓС‰РµРµ РїРѕР»РѕР¶РµРЅРёРµ
   xp := APoint.X;
   yp := APoint.Y;
   while True do
@@ -764,7 +764,7 @@ begin
   y := FArgs.GetInt(IDX_CLICK_Y);
   id := FArgs.GetInt(IDX_CLICK_CALLBACKID);
   p := TPoint.Create(x, y);
-  CefUIMouseSetToPoint(FBrowser, FOwner.AbortEvent, nil, p, CLICK_PAUSE_DEF div 10);
+  CefUIMouseSetToPoint(FBrowser, FOwner.AbortEvent, nil, p, (CLICK_PAUSE_DEF div 10)+1);
   if not FOwner.IsAborted then
   begin
     if FFocus then
