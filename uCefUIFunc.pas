@@ -124,7 +124,7 @@ function CefUIGetElementAsMarkup(const AAction: TCefScriptBase; const AElement: 
 
 implementation
 
-{$DEFINE LOG_XY}
+//{$DEFINE LOG_XY}
 //{$DEFINE MOUSE_CURSOR}
 
 
@@ -143,7 +143,7 @@ uses
 
 
 const
-  CLICK_PAUSE_DEF = 30; // cef80 set 0, иначе не нажимается
+  CLICK_PAUSE_DEF = 0; // cef80 set 0, иначе не нажимается
 
 function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const A: ICefProcessMessage): ICefListValue;
@@ -770,7 +770,7 @@ begin
     if FFocus then
     begin
         {$IFDEF LOG_XY} MainForm.Log.Warning('*SendFocusEvent!'); {$ENDIF}
-      FBrowser.Host.SendFocusEvent(True);
+    //  FBrowser.Host.SendFocusEvent(True);   временно проверка
     end;
     CefUIMouseClick(FBrowser, p, CLICK_PAUSE_DEF, FOwner.AbortEvent);
     //
@@ -994,7 +994,7 @@ var
   slp: Integer;
 begin
   br := AAction.Chromium;
-  br.SendFocusEvent(True);
+  // br.SendFocusEvent(True); верменно проверка
   if CefUIScrollToElement(AAction, AElement) then
   begin
     if CefUIMouseMoveToElement(AAction, AElement) then

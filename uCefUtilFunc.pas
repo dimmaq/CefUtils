@@ -73,7 +73,7 @@ implementation
 uses
   //
   uCEFStringMap, uCEFDictionaryValue, uCefTask, uCEFValue, uCefv8Context,
-  uCEFMiscFunctions, uCEFConstants,
+  uCEFMiscFunctions, uCEFConstants, uCEFJson,
   //
   uGlobalFunctions,
   //
@@ -279,7 +279,7 @@ var val: ICefValue;
 begin
   val := TCefValueRef.New;
   val.SetList(A);
-  Result := CefWriteJson(val, JSON_WRITER_PRETTY_PRINT) // JSON_WRITER_PRETTY_PRINT
+  Result := TCEFJson.Write(val, JSON_WRITER_PRETTY_PRINT) // JSON_WRITER_PRETTY_PRINT
 end;
 { TElementParams }
 
