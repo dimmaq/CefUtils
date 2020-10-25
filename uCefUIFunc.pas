@@ -770,7 +770,7 @@ begin
     if FFocus then
     begin
         {$IFDEF LOG_XY} MainForm.Log.Warning('*SendFocusEvent!'); {$ENDIF}
-    //  FBrowser.Host.SendFocusEvent(True);   временно проверка
+//      FBrowser.Host.SendFocusEvent(True); фокус переключает на окно - пока выключу
     end;
     CefUIMouseClick(FBrowser, p, CLICK_PAUSE_DEF, FOwner.AbortEvent);
     //
@@ -809,7 +809,7 @@ begin
   FillMemory(@event, SizeOf(event), 0);
   event.is_system_key := 0;
   event.modifiers := 0;
-//  event.focus_on_editable_field := ord(True);
+  event.focus_on_editable_field := ord(True);
 
   VkCode := LOBYTE(VkKeyScan(Char(AkeyCode)));
   scanCode := MapVirtualKey(VkCode, MAPVK_VK_TO_VSC);
@@ -994,7 +994,7 @@ var
   slp: Integer;
 begin
   br := AAction.Chromium;
-  // br.SendFocusEvent(True); верменно проверка
+//  br.SendFocusEvent(False); фокус переключает на окно - пока выключу
   if CefUIScrollToElement(AAction, AElement) then
   begin
     if CefUIMouseMoveToElement(AAction, AElement) then
