@@ -38,6 +38,10 @@ type
     procedure TestParamGetter(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
     procedure TestParamSetter(const obj: ICefv8Value; const arguments: TCefv8ValueArray; var retval: ICefv8Value; var exception: ustring);
   protected
+    CefV8FalseValue: ICefv8Value;
+    CefV8TrueValue: ICefv8Value;
+    CefV8BoolValues: array[Boolean] of ICefv8Value;
+  protected
     FHandlers: THandlersDict;
     FParams: TParamsDict;
     function GetParam(const AName: string; out AValue: ICefv8Value): Boolean; virtual;
@@ -159,6 +163,11 @@ begin
   Name := AName;
   FHandlers := THandlersDict.Create;
   FParams := TParamsDict.Create;
+
+  CefV8FalseValue := TCefv8ValueRef.NewBool(False);
+  CefV8TrueValue := TCefv8ValueRef.NewBool(True);
+  CefV8BoolValues[True] := CefV8TrueValue;
+  CefV8BoolValues[False] := CefV8FalseValue;
 end;
 
 destructor TCefJsExt.Destroy;
