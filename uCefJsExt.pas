@@ -64,6 +64,8 @@ function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Intege
 function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
   var AValue: Integer): Boolean; overload;
 function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
+  var AValue: Double): Boolean; overload;
+function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
   var AValue: string): Boolean; overload;
 function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
   var AValue: Boolean): Boolean; overload;
@@ -99,6 +101,22 @@ begin
     if v.isUInt then
     begin
       AValue := v.GetUIntValue;
+      Exit(True)
+    end
+  end;
+  Result := False;
+end;
+
+
+function TryGetArgument(const AArguments: TCefv8ValueArray; const AIndex: Integer;
+  var AValue: Double): Boolean;
+var v: ICefv8Value;
+begin
+  if TryGetArgument(AArguments, AIndex, v) and Assigned(v) then
+  begin
+    if v.IsDouble then
+    begin
+      AValue := v.GetDoubleValue();
       Exit(True)
     end
   end;
