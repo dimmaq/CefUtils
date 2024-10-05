@@ -413,8 +413,13 @@ begin
 end;
 
 function CefSendProcessMessageCurrentContext(const ATarget: TCefProcessId; const AMsg: ICefProcessMessage): Boolean;
+var curctx: ICefv8Context;
 begin
-  Result := CefSendProcessMessageBrowser(TCefv8ContextRef.Current.Browser, ATarget, AMsg);
+  curctx := TCefv8ContextRef.Current;
+  if Assigned(curctx) then
+    Result := CefSendProcessMessageBrowser(curctx.Browser, ATarget, AMsg)
+  else
+    Result := False
 end;
 
 function CefSendProcessMessageCurrentContextToRender(const AMsg: ICefProcessMessage): Boolean;
