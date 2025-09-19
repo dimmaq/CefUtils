@@ -125,7 +125,7 @@ function CefUIGetElementAsMarkup(const AAction: TCefScriptBase; const AElement: 
 implementation
 
 //{$DEFINE LOG_XY}
-//{$DEFINE MOUSE_CURSOR}
+{.$DEFINE MOUSE_CURSOR}
 
 
 uses
@@ -805,19 +805,15 @@ var
   scanCode: UINT;
 begin
 //  AKeyCode := VK_ESCAPE;
-
   FillMemory(@event, SizeOf(event), 0);
   event.is_system_key := 0;
   event.modifiers := 0;
   event.focus_on_editable_field := ord(True);
-
   VkCode := LOBYTE(VkKeyScan(Char(AkeyCode)));
   scanCode := MapVirtualKey(VkCode, MAPVK_VK_TO_VSC);
-
   event.native_key_code := (scanCode shl 16) or  // key scan code
                              1;                  // key repeat count
   event.windows_key_code := VkCode;
-
 
       {$IFDEF LOG_XY}  {$ENDIF}
   event.kind := KEYEVENT_RAWKEYDOWN;

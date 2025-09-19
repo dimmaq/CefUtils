@@ -119,6 +119,12 @@ begin
       AValue := v.GetDoubleValue();
       Exit(True)
     end
+    else
+    if v.isUInt then
+    begin
+      AValue := v.GetUIntValue;
+      Exit(True)
+    end
   end;
   Result := False;
 end;

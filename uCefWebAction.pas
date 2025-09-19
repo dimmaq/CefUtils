@@ -30,7 +30,7 @@ type
     procedure Clear;
     procedure OnLoadStart(Sender: TObject; const browser: ICefBrowser; const frame: ICefFrame; transitionType: TCefTransitionType);
     procedure OnLoadEnd(Sender: TObject; const browser: ICefBrowser; const frame: ICefFrame; httpStatusCode: Integer);
-    procedure OnLoadError(Sender: TObject; const browser: ICefBrowser; const frame: ICefFrame; errorCode: Integer; const errorText, failedUrl: ustring);
+    procedure OnLoadError(Sender: TObject; const browser: ICefBrowser; const frame: ICefFrame; errorCode: TCefErrorCode; const errorText, failedUrl: ustring);
   protected
     function DoStartEvent: Boolean; override;
   public
@@ -182,7 +182,7 @@ begin
 end;
 
 procedure TCefWebAction.OnLoadError(Sender: TObject; const browser: ICefBrowser;
-  const frame: ICefFrame; errorCode: Integer; const errorText,
+  const frame: ICefFrame; errorCode: TCefErrorCode; const errorText,
   failedUrl: ustring);
 var
   save: TOnLoadError;
