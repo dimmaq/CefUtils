@@ -111,7 +111,8 @@ procedure TCefSendEventThread.Execute;
 begin
     while not Aborted do
     begin
-      Sleep(60000, FEvent);
+      //TThread.Sleep(100);
+      Sleep(1000, FEvent);
       if Aborted then
         Exit
       else

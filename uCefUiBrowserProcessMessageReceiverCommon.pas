@@ -44,7 +44,7 @@ var
   z: string;
 begin
   AResult := False;
-  arg := AMessage.ArgumentList;
+  arg := AMessage.ArgumentList.Copy();
   if arg.GetType(IDX_TYPE) = VTYPE_INT then
   begin
     AResult := True;
@@ -65,7 +65,7 @@ begin
     if Assigned(event) then
     begin
       z := z + 'tick:' + IntToStr(event.TickDif()) + ' res:' + CefListValueToJsonStr(arg);
-      event.Res := arg.Copy();
+      event.Res := arg;
       event.Event.SetEvent();
       AResult := True;
     end;

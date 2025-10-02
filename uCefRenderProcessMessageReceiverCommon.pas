@@ -186,7 +186,7 @@ begin
   AHandled := True;
   //---
   tick := GetTickCount();
-  arg := AMessage.ArgumentList;
+  arg := AMessage.ArgumentList.Copy();
   eventId := arg.GetInt(IDX_EVENT);
   CefLog('uCefRenderProcessMessageReceiverCommon', 191, 1,
     Format('RenderReceive browser:%d event:%d params:%s', [ABrowser.Identifier, eventId, CefListValueToJsonStr(arg)]));
@@ -216,7 +216,7 @@ begin
   arg := nil;
   if Assigned(msg) then
   begin
-    arg := msg.ArgumentList;
+    arg := msg.ArgumentList.Copy();
     arg.SetInt(IDX_EVENT, eventId);
     tick := G_TickCountSince(tick);
     CefLog('uCefRenderProcessMessageReceiverCommon', 222, 1,

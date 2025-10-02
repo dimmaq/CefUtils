@@ -435,7 +435,6 @@ var
   cbId: Integer;
 begin
   cbId := gCallbackList.Add(ACallback);
-
   msg := CefAppMessageType(VAL_KEY_PRESS, arg);
   arg.SetInt(IDX_KEY_CALLBACKID, cbId);
   arg.SetInt(IDX_KEY_CODE, AKey);

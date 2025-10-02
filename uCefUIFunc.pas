@@ -814,23 +814,22 @@ begin
   event.native_key_code := (scanCode shl 16) or  // key scan code
                              1;                  // key repeat count
   event.windows_key_code := VkCode;
-
-      {$IFDEF LOG_XY}  {$ENDIF}
   event.kind := KEYEVENT_RAWKEYDOWN;
-      {$IFDEF LOG_XY} MainForm.Log.Warning('*key_down: ' + VkCode.ToString); {$ENDIF}
+  CefLog('cefUIFunc', 0, 0, 'KEYEVENT_RAWKEYDOWN');
   ABrowser.Host.SendKeyEvent(@event);
   sleep_(ATimeout div 2);
   event.windows_key_code := AKeyCode;
   event.kind := KEYEVENT_CHAR;
-      {$IFDEF LOG_XY} MainForm.Log.Warning('*key_char: ' + VkCode.ToString); {$ENDIF}
+  CefLog('cefUIFunc', 0, 0, 'KEYEVENT_CHAR');
   ABrowser.Host.SendKeyEvent(@event);
   sleep_(ATimeout);
   event.windows_key_code := VkCode;
   // bits 30 and 31 should be always 1 for WM_KEYUP
   event.native_key_code := event.native_key_code or Integer($C0000000);
   event.kind := KEYEVENT_KEYUP;
-      {$IFDEF LOG_XY} MainForm.Log.Warning('*key_up: ' + VkCode.ToString); {$ENDIF}
+  CefLog('cefUIFunc', 0, 0, 'KEYEVENT_KEYUP');
   ABrowser.Host.SendKeyEvent(@event);
+
 end;
 
 procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer);
@@ -857,6 +856,7 @@ procedure TKeyboardTask.Execute;
 var
   key, id: Integer;
 begin
+//  Exit;
   id := FArgs.GetInt(IDX_KEY_CALLBACKID);
   key := FArgs.GetInt(IDX_KEY_CODE);
   CefSendKeyEvent(FBrowser, key, FOwner.AbortEvent, CLICK_PAUSE_DEF);
