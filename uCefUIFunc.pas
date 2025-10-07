@@ -88,7 +88,7 @@ procedure CefUIMouseClick(const AAction: TCefScriptBase); overload;
 procedure CefUIFocusClickAndCallbackAsync(const AFocus: Boolean;
   const ABrowser: ICefBrowser; const AArg: ICefListValue);
 procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer;
-  const AAbordEvent: TEvent; const ATimeout: Integer); overload;
+  const AAbordEvent: TEvent); overload;
 procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer); overload;
 procedure CefUIKeyPress(const ABrowser: ICefBrowser; const AArg: ICefListValue);
 procedure CefUIKeyPressAsync(const ABrowser: ICefBrowser; const AArg: ICefListValue);
@@ -143,7 +143,7 @@ uses
 
 
 const
-  CLICK_PAUSE_DEF = 0; // cef80 set 0, иначе не нажимается
+  CLICK_PAUSE_DEF = 1; // cef80 set 0, иначе не нажимается
 
 function CefUISendRenderMessage(const ABrowser: ICefBrowser; const AAbortEvent: TEvent;
   const A: ICefProcessMessage): ICefListValue;
@@ -788,7 +788,7 @@ begin
 end;
 
 procedure CefSendKeyEvent(const ABrowser: ICefBrowser; AKeyCode: Integer;
-  const AAbordEvent: TEvent; const ATimeout: Integer);
+  const AAbordEvent: TEvent);
 
   procedure sleep_(ms: Integer);
   begin
@@ -804,44 +804,40 @@ var
   VkCode: Byte;
   scanCode: UINT;
 begin
-//  AKeyCode := VK_ESCAPE;
   FillMemory(@event, SizeOf(event), 0);
+  event.size := SizeOf(event);
   event.is_system_key := 0;
   event.modifiers := 0;
-  event.focus_on_editable_field := ord(True);
-  VkCode := LOBYTE(VkKeyScan(Char(AkeyCode)));
+  //
+  VkCode := LOBYTE(VkKeyScanA(AnsiChar(AKeyCode)));
   scanCode := MapVirtualKey(VkCode, MAPVK_VK_TO_VSC);
   event.native_key_code := (scanCode shl 16) or  // key scan code
-                             1;                  // key repeat count
+                          1;                  // key repeat count
+  //
   event.windows_key_code := VkCode;
   event.kind := KEYEVENT_RAWKEYDOWN;
-  CefLog('cefUIFunc', 0, 0, 'KEYEVENT_RAWKEYDOWN');
   ABrowser.Host.SendKeyEvent(@event);
-  sleep_(ATimeout div 2);
+  //
   event.windows_key_code := AKeyCode;
   event.kind := KEYEVENT_CHAR;
-  CefLog('cefUIFunc', 0, 0, 'KEYEVENT_CHAR');
   ABrowser.Host.SendKeyEvent(@event);
-  sleep_(ATimeout);
+  //
   event.windows_key_code := VkCode;
-  // bits 30 and 31 should be always 1 for WM_KEYUP
-  event.native_key_code := event.native_key_code or Integer($C0000000);
+  event.native_key_code := event.native_key_code or Integer($C0000000); // bits 30 and 31 should be always 1 for WM_KEYUP
   event.kind := KEYEVENT_KEYUP;
-  CefLog('cefUIFunc', 0, 0, 'KEYEVENT_KEYUP');
   ABrowser.Host.SendKeyEvent(@event);
-
 end;
 
 procedure CefSendKeyEvent(const ABrowser: TChromium; AKeyCode: Integer);
 begin
-  CefSendKeyEvent(ABrowser.Browser, AKeyCode, nil, CLICK_PAUSE_DEF)
+  CefSendKeyEvent(ABrowser.Browser, AKeyCode, nil)
 end;
 
 procedure CefUIKeyPress(const ABrowser: ICefBrowser; const AArg: ICefListValue);
 var key: Integer;
 begin
   key := AArg.GetInt(IDX_VALUE);
-  CefSendKeyEvent(ABrowser, key, nil, CLICK_PAUSE_DEF)
+  CefSendKeyEvent(ABrowser, key, nil)
 end;
 
 
@@ -854,15 +850,15 @@ type
 
 procedure TKeyboardTask.Execute;
 var
-  key, id: Integer;
+  key, cbid: Integer;
 begin
 //  Exit;
-  id := FArgs.GetInt(IDX_KEY_CALLBACKID);
+  cbid := FArgs.GetInt(IDX_KEY_CALLBACKID);
   key := FArgs.GetInt(IDX_KEY_CODE);
-  CefSendKeyEvent(FBrowser, key, FOwner.AbortEvent, CLICK_PAUSE_DEF);
+  CefSendKeyEvent(FBrowser, key, FOwner.AbortEvent);
   if not FOwner.IsAborted then
   begin
-    CefExecJsCallback(FBrowser, id);
+    CefExecJsCallback(FBrowser, cbid);
   end;
 end;
 
