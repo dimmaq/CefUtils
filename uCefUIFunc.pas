@@ -141,6 +141,9 @@ uses
   //
   uCefUtilConst, uCefWaitEventList, uCefUiSendEventThread;
 
+{$IF (CEF_SUPPORTED_VERSION_MAJOR >= 139) }
+  {$DEFINE IS_NEW_CHROME139}
+{$ENDIF}
 
 const
   CLICK_PAUSE_DEF = 1; // cef80 set 0, иначе не нажимается
@@ -805,7 +808,9 @@ var
   scanCode: UINT;
 begin
   FillMemory(@event, SizeOf(event), 0);
+  {$IFDEF  IS_NEW_CHROME139}
   event.size := SizeOf(event);
+  {$ENDIF}
   event.is_system_key := 0;
   event.modifiers := 0;
   //
